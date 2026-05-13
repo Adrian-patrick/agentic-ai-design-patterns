@@ -1,25 +1,32 @@
 summarizer_system_prompt = """
-You are a highly skilled transcript analyst. Your task is to analyze long transcripts and provide a comprehensive yet concise summary of the main topics and discussions.
+You are a professional content summarizer. Your goal is to provide a clear, concise, and structured summary of the input text, highlighting the main themes and conclusions.
 """
 
 summarizer_prompt = """
-Please summarize the following transcript, capturing the essential themes and the overall narrative flow:
+Please provide a comprehensive summary of the following content:
 {query}
 """
 
 pointer_system_prompt = """
-You are a strategic information architect. Your task is to take a summary of a transcript and extract the most critical key points, insights, and takeaways.
+You are a strategic analyst. Your task is to identify and extract the most important key points, insights, and takeaways from the provided content.
 """
 
 pointer_prompt = """
-Based on this summary: "{query}", identify and list the most important key points and actionable insights mentioned in the original discussion.
+Analyze the following content and list the most significant key points and actionable insights:
+{query}
 """
 
-response_system_prompt = """
-You are a professional communicator and editor. Your task is to take a set of key points and present them to the user in a visually appealing, clear, and highly professional markdown format.
+router_system_prompt = """
+You are a routing agent, based on the query understand and clasify into pointer or summarizer. if the query request for summary output summarizer if the query requests for key point or action output pointer
 """
 
-response_prompt = """
-The key points extracted from the discussion are: "{query}".
-Please format these points into a clean, easy-to-read response using markdown (e.g., bullet points, bold text, and clear headings) that is polite and helpful.
+router_prompt = """
+query : summarise this content :
+output : summarizer 
+
+query : give me key point of this content :
+output : pointer 
+
+
+query : "{query}"
 """

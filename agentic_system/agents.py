@@ -1,7 +1,26 @@
 from pydantic_ai import Agent
+from pydantic import BaseModel
 from .config import create_model
-from .prompts import summarizer_system_prompt, summarizer_prompt, pointer_system_prompt, pointer_prompt, response_system_prompt, response_prompt
+from .prompts import router_system_prompt, router_prompt, summarizer_system_prompt, summarizer_prompt, pointer_system_prompt, pointer_prompt
 
+from typing import Literal
+
+class Routes(BaseModel):
+    route: Literal["summarizer", "pointer"]
+    
+class Router:
+
+    def __init__(self, ):
+        
+        self.agent = Agent(
+            model=create_model(),
+            system_prompt=router_system_prompt,
+            output_type=Routes,
+        )
+
+    async def route(self, query : str):
+
+        return await self.agent.run(router_prompt.format(query=query))
 
 class Summarizer:
 
@@ -30,19 +49,6 @@ class Pointer:
     async def point(self, query : str):
 
         return await self.agent.run(pointer_prompt.format(query=query))
-
-class Responder:
-    def __init__(self,):
-
-        self.agent = Agent(
-            model=create_model(),
-            system_prompt=response_system_prompt,
-            output_type=str,
-        )
-
-    async def respond(self, query : str):
-
-        return await self.agent.run(response_prompt.format(query=query))
 
 
 
