@@ -1,4 +1,4 @@
-# Agentic AI Design Patterns - Routing Pattern
+# Routing 
 
 A multi-agent orchestration system demonstrating the **Routing Pattern** using `pydantic-ai` and `pydantic-graph`.
 
