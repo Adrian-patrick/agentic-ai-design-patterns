@@ -1,4 +1,4 @@
-# Agentic AI Design Patterns
+# Prompt Chaining
 
 A multi-agent orchestration system demonstrating the **Chain of Responsibility** pattern using `pydantic-ai` and `pydantic-graph`.
 
