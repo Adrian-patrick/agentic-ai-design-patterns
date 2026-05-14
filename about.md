@@ -1,75 +1,82 @@
-# Routing Pattern
+# Parallelization Pattern
 
 ## When to Use
 
-- **Multi-domain systems**: When handling diverse request types requiring different expertise
-- **Dynamic workflow selection**: When the appropriate process depends on input characteristics
-- **Resource optimization**: When different requests require different computational resources
-- **Specialized tool access**: When specific tools or APIs are needed based on request type
-- **Confidence-based processing**: When you need to handle ambiguous requests differently
-- **Load balancing**: When distributing work across multiple specialized agents
+- **Large-scale data processing**: When processing multiple documents, records, or data sources
+- **Time-sensitive operations**: When results are needed quickly and tasks are independent
+- **Batch operations**: When performing the same operation on multiple items
+- **Web scraping/crawling**: When gathering data from multiple sources simultaneously
+- **Multi-document analysis**: When analyzing multiple files or documents independently
+- **API aggregation**: When calling multiple APIs that don't depend on each other
 
 ## Where It Fits
 
-- **Customer service platforms**: Routing inquiries to appropriate department agents
-- **Multi-modal AI systems**: Directing requests to text, image, or code processing pipelines
-- **Enterprise automation**: Routing tasks to appropriate business process workflows
-- **Content moderation**: Directing content to appropriate review pipelines
-- **Healthcare triage**: Routing patient queries to appropriate medical specialists
+- **Document processing pipelines**: Analyzing multiple PDFs or reports simultaneously
+- **Data enrichment workflows**: Enhancing records from multiple data sources
+- **Content generation**: Creating multiple variations or translations in parallel
+- **Research automation**: Searching multiple databases or sources concurrently
+- **Testing frameworks**: Running multiple test scenarios simultaneously
 
 ## Pros
 
-- **Specialization**: Each route can be optimized for specific task types
-- **Scalability**: Easy to add new routes without affecting existing ones
-- **Efficiency**: Requests are handled by the most appropriate resources
-- **Flexibility**: Dynamic routing based on context and confidence
-- **Clarity**: Clear separation of concerns between different workflows
-- **Performance**: Avoid unnecessary processing for simple requests
-- **Maintainability**: Each route can be updated independently
+- **Speed improvement**: Dramatic reduction in total processing time
+- **Resource utilization**: Better use of available computational resources
+- **Scalability**: Easy to scale up or down based on workload
+- **Fault isolation**: Failure in one worker doesn't affect others
+- **Progress tracking**: Can show incremental progress as workers complete
+- **Flexibility**: Can dynamically adjust worker count based on load
+- **Cost efficiency**: Optimize resource usage and reduce idle time
 
 ## Cons
 
-- **Router complexity**: The routing logic itself can become a bottleneck
-- **Misrouting risks**: Incorrect routing decisions can lead to poor outcomes
-- **Latency overhead**: Additional step for routing decision adds delay
-- **Training requirements**: Router needs continuous improvement based on feedback
-- **Edge cases**: Ambiguous requests may not fit cleanly into categories
-- **Coordination overhead**: Managing multiple specialized agents increases complexity
-- **Monitoring complexity**: Need to track performance across multiple paths
+- **Complexity increase**: Managing multiple concurrent processes is challenging
+- **Resource limits**: API rate limits and quotas constrain parallelization
+- **Coordination overhead**: Synchronization and result merging add complexity
+- **Debugging difficulty**: Harder to trace issues in parallel execution
+- **Cost multiplication**: Multiple simultaneous API calls increase costs
+- **Memory usage**: Holding multiple results in memory can be resource-intensive
+- **Ordering challenges**: Maintaining sequence when needed requires extra logic
 
 ## Real-World Examples
 
-1. **AI Customer Service Hub**:
-   - Technical issues → Technical Support Agent with access to documentation
-   - Billing questions → Finance Agent with access to payment systems
-   - Product inquiries → Sales Agent with catalog access
-   - Complaints → Escalation Agent with CRM integration
-   - General questions → FAQ Agent with knowledge base
+1. **News Aggregation Service**:
+   - Simultaneously fetch articles from 50+ news sources
+   - Each worker processes one news source
+   - Rate limit to 10 concurrent API calls
+   - Merge and deduplicate results
+   - Sort by relevance and timestamp
 
-2. **Content Creation Platform**:
-   - Blog posts → Long-form Writing Agent
-   - Social media → Short-form Content Agent
-   - Technical documentation → Technical Writing Agent
-   - Marketing copy → Copywriting Agent
-   - Translations → Localization Agent
+2. **E-commerce Price Monitoring**:
+   - Monitor prices across 100+ competitor sites
+   - Parallel workers scrape product pages
+   - Handle retry logic for failed requests
+   - Aggregate pricing data into comparison matrix
+   - Generate price change alerts
 
-3. **Code Assistant Router**:
-   - Bug fixes → Debugging Agent with error analysis tools
-   - New features → Development Agent with design patterns
-   - Refactoring → Code Quality Agent with best practices
-   - Testing → Test Generation Agent with coverage tools
-   - Documentation → Documentation Agent with template library
+3. **Document Intelligence System**:
+   - Process 1000+ page legal document set
+   - Split into 50-page chunks for parallel analysis
+   - Each worker extracts entities and clauses
+   - Merge findings into comprehensive report
+   - Track document provenance for each finding
 
-4. **Financial Services Router**:
-   - Trading requests → Trading Agent with market data
-   - Risk assessment → Risk Analysis Agent with models
-   - Compliance checks → Compliance Agent with regulations
-   - Reporting → Report Generation Agent with templates
-   - Fraud detection → Security Agent with pattern detection
+4. **Social Media Analytics**:
+   - Analyze mentions across Twitter, LinkedIn, Facebook, Instagram
+   - Parallel workers for each platform
+   - Apply sentiment analysis to each mention
+   - Aggregate into unified dashboard
+   - Generate trend reports with platform breakdown
 
-5. **Educational Platform Router**:
-   - Math problems → Mathematical Reasoning Agent
-   - Language learning → Language Tutor Agent
-   - Science questions → Science Expert Agent
-   - History queries → Historical Research Agent
-   - Study planning → Learning Strategy Agent
+5. **Code Repository Analysis**:
+   - Scan entire codebase for security vulnerabilities
+   - Parallel workers analyze different directories
+   - Each worker runs different security checks
+   - Collect and prioritize all findings
+   - Generate comprehensive security report
+
+6. **Multi-language Translation Project**:
+   - Translate documentation into 15 languages
+   - Parallel workers for each language pair
+   - Maintain consistency with translation memory
+   - Quality check each translation
+   - Compile into multi-language documentation set

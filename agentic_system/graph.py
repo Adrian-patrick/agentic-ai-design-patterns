@@ -1,64 +1,69 @@
-from .agents import Summarizer, Pointer, Router
+import asyncio
+from .agents import Summarizer, Pointer, Responder
 from .models import State, Dependencies
 from pydantic_graph import BaseNode, End, GraphRunContext, Graph
 
 class StartNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "RoutingNode":
-        return RoutingNode()
+    ) -> "WorkerNode":
+        return WorkerNode()
 
-class RoutingNode(BaseNode[State, Dependencies, str]):
+import asyncio  # <--- Fix 3: Ensure asyncio is explicitly imported
+from pydantic_graph import BaseNode, End, GraphRunContext
+
+
+class WorkerNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "SummaryNode | PointerNode":
+    ) -> "ResponseNode | End[str]":  # <--- Fix 1: Add End[str] to the type hint
 
-        router = ctx.deps.router
-        
-        route_result = await router.route(ctx.state.query)
-        ctx.state.route = route_result.output.route
+        print("============inside worker node============")
 
-        print("================route", ctx.state.route,"================")
-        
-        if ctx.state.route == "summarizer":
-            return SummaryNode()
-        elif ctx.state.route == "pointer":
-            return PointerNode()
-        else :
-            return End("Invalid route")
-
-class SummaryNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> End[str]:
-        
-        print("============inside summary node============")
         summarizer = ctx.deps.summarizer
-        
-        # Run Summarizer
-        summary_result = await summarizer.summarize(ctx.state.query)
-        ctx.state.summarizer_response = summary_result.output
-        
-        return End(ctx.state.summarizer_response)
+        pointer = ctx.deps.pointer
 
-class PointerNode(BaseNode[State, Dependencies, str]):
+        # Fix 2: Verify these methods are 'async def' in your dependency classes
+        summarizer_task = summarizer.summarize(ctx.state.query)
+        pointer_task = pointer.point(ctx.state.query)
+
+        try:
+            summarizer_output, pointer_output = await asyncio.gather(
+                summarizer_task, pointer_task
+            )
+            ctx.state.summarizer_response = summarizer_output
+            ctx.state.pointer_response = pointer_output
+        except Exception as e:
+            return End(f"Error: {str(e)}")
+            
+        return ResponseNode()
+
+class ResponseNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
     ) -> End[str]:
         
-        print("============inside pointer node============")
-        pointer = ctx.deps.pointer
+        print("============inside response node============")
+        responder = ctx.deps.responder
         
-        # Run Pointer - it handles formatting internally
-        pointer_result = await pointer.point(ctx.state.query)
-        ctx.state.pointer_response = pointer_result.output
+        # Run Responder
+        try : 
+            response_result = await responder.respond(
+                ctx.state.pointer_response, 
+                ctx.state.summarizer_response, 
+                ctx.state.query
+            )
+            ctx.state.responder_response = response_result.output
+        except Exception as e:
+            return End(f"Error: {str(e)}")
         
-        return End(ctx.state.pointer_response)
+        return End(ctx.state.responder_response)
+
 
         
 def build_graph() -> Graph:
     return Graph(
-        nodes=[StartNode, RoutingNode, SummaryNode, PointerNode],
+        nodes=[StartNode, WorkerNode, ResponseNode],
         state_type=State,
         run_end_type=str
     )
@@ -67,7 +72,7 @@ def build_deps() -> Dependencies:
     return Dependencies(
         summarizer=Summarizer(),
         pointer=Pointer(),
-        router=Router(),
+        responder=Responder(),
     )
 
 async def run_graph(query: str) -> str:

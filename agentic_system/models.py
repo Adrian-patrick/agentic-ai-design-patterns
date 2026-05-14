@@ -7,10 +7,10 @@ class State(BaseModel):
     summarizer_response : Optional[str] = None
     pointer_response : Optional[str] = None
     responder_response : Optional[str] = None
-    route : Optional[str] = None
+    
 class Dependencies(BaseModel):
     """The dependencies of the agent."""
     summarizer : Any
     pointer : Any
-    router : Any
+    responder : Any
 
