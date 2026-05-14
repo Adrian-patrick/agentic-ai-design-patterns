@@ -1,4 +1,4 @@
-# Agentic AI Design Patterns - Parallelization Pattern
+# Parallelization
 
 A multi-agent orchestration system demonstrating the **Parallelization Pattern** (Worker-Aggregator) using `pydantic-ai` and `pydantic-graph`.
 
