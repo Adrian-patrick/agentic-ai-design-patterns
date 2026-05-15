@@ -1,82 +1,88 @@
-# Parallelization Pattern
+# Reflection Pattern
 
 ## When to Use
 
-- **Large-scale data processing**: When processing multiple documents, records, or data sources
-- **Time-sensitive operations**: When results are needed quickly and tasks are independent
-- **Batch operations**: When performing the same operation on multiple items
-- **Web scraping/crawling**: When gathering data from multiple sources simultaneously
-- **Multi-document analysis**: When analyzing multiple files or documents independently
-- **API aggregation**: When calling multiple APIs that don't depend on each other
+- **Quality-critical outputs**: When high accuracy and quality are non-negotiable
+- **Complex reasoning tasks**: When problems require iterative refinement
+- **Creative work**: When content needs multiple rounds of improvement
+- **Learning systems**: When you want to improve performance over time
+- **Error-prone domains**: When initial attempts often have mistakes
+- **Compliance requirements**: When outputs must meet specific standards
 
 ## Where It Fits
 
-- **Document processing pipelines**: Analyzing multiple PDFs or reports simultaneously
-- **Data enrichment workflows**: Enhancing records from multiple data sources
-- **Content generation**: Creating multiple variations or translations in parallel
-- **Research automation**: Searching multiple databases or sources concurrently
-- **Testing frameworks**: Running multiple test scenarios simultaneously
+- **Content creation**: Blog posts, reports, and documentation requiring polish
+- **Code generation**: Producing bug-free, optimized code
+- **Legal document drafting**: Ensuring accuracy and completeness
+- **Academic writing**: Research papers needing fact-checking and citations
+- **Product descriptions**: E-commerce content requiring SEO and accuracy
 
 ## Pros
 
-- **Speed improvement**: Dramatic reduction in total processing time
-- **Resource utilization**: Better use of available computational resources
-- **Scalability**: Easy to scale up or down based on workload
-- **Fault isolation**: Failure in one worker doesn't affect others
-- **Progress tracking**: Can show incremental progress as workers complete
-- **Flexibility**: Can dynamically adjust worker count based on load
-- **Cost efficiency**: Optimize resource usage and reduce idle time
+- **Quality improvement**: Systematic enhancement through multiple iterations
+- **Error reduction**: Catches and fixes mistakes before final delivery
+- **Objectivity**: Separation of generation and critique roles
+- **Learning capability**: System improves over time from patterns
+- **Transparency**: Clear feedback trail for improvements
+- **Flexibility**: Can adjust critique criteria for different use cases
+- **Consistency**: Applies same quality standards uniformly
 
 ## Cons
 
-- **Complexity increase**: Managing multiple concurrent processes is challenging
-- **Resource limits**: API rate limits and quotas constrain parallelization
-- **Coordination overhead**: Synchronization and result merging add complexity
-- **Debugging difficulty**: Harder to trace issues in parallel execution
-- **Cost multiplication**: Multiple simultaneous API calls increase costs
-- **Memory usage**: Holding multiple results in memory can be resource-intensive
-- **Ordering challenges**: Maintaining sequence when needed requires extra logic
+- **Increased latency**: Multiple iterations multiply processing time
+- **Higher costs**: Each reflection cycle incurs additional API calls
+- **Context window limits**: Long documents may exceed token limits
+- **Diminishing returns**: Later iterations may provide minimal improvement
+- **Over-optimization**: Risk of making content generic or losing voice
+- **Complexity**: Requires careful tuning of critique criteria
+- **API throttling**: Multiple rapid calls may hit rate limits
 
 ## Real-World Examples
 
-1. **News Aggregation Service**:
-   - Simultaneously fetch articles from 50+ news sources
-   - Each worker processes one news source
-   - Rate limit to 10 concurrent API calls
-   - Merge and deduplicate results
-   - Sort by relevance and timestamp
+1. **Technical Blog Post Creation**:
+   - Initial draft generation
+   - Technical accuracy review
+   - Code example validation
+   - SEO optimization check
+   - Readability improvements
+   - Final grammar and style polish
 
-2. **E-commerce Price Monitoring**:
-   - Monitor prices across 100+ competitor sites
-   - Parallel workers scrape product pages
-   - Handle retry logic for failed requests
-   - Aggregate pricing data into comparison matrix
-   - Generate price change alerts
+2. **Contract Generation System**:
+   - Draft initial contract terms
+   - Legal compliance review
+   - Risk assessment critique
+   - Clarity and ambiguity check
+   - Client-specific customization
+   - Final legal review
 
-3. **Document Intelligence System**:
-   - Process 1000+ page legal document set
-   - Split into 50-page chunks for parallel analysis
-   - Each worker extracts entities and clauses
-   - Merge findings into comprehensive report
-   - Track document provenance for each finding
+3. **Educational Content Development**:
+   - Create lesson content
+   - Pedagogical effectiveness review
+   - Factual accuracy verification
+   - Age-appropriateness check
+   - Engagement factor assessment
+   - Accessibility improvements
 
-4. **Social Media Analytics**:
-   - Analyze mentions across Twitter, LinkedIn, Facebook, Instagram
-   - Parallel workers for each platform
-   - Apply sentiment analysis to each mention
-   - Aggregate into unified dashboard
-   - Generate trend reports with platform breakdown
+4. **Software Documentation**:
+   - Generate API documentation
+   - Technical accuracy review
+   - Code example testing
+   - Completeness check
+   - Clarity improvements
+   - Version consistency validation
 
-5. **Code Repository Analysis**:
-   - Scan entire codebase for security vulnerabilities
-   - Parallel workers analyze different directories
-   - Each worker runs different security checks
-   - Collect and prioritize all findings
-   - Generate comprehensive security report
+5. **Marketing Copy Refinement**:
+   - Initial copy generation
+   - Brand voice alignment check
+   - Persuasiveness assessment
+   - Fact and claim verification
+   - SEO keyword optimization
+   - A/B test variant creation
 
-6. **Multi-language Translation Project**:
-   - Translate documentation into 15 languages
-   - Parallel workers for each language pair
-   - Maintain consistency with translation memory
-   - Quality check each translation
-   - Compile into multi-language documentation set
+6. **Research Report Writing**:
+   - Draft research findings
+   - Methodology critique
+   - Statistical validation
+   - Citation verification
+   - Logical flow improvement
+   - Executive summary refinement

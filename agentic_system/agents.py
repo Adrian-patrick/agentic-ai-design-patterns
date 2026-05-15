@@ -1,21 +1,8 @@
+from pydantic import BaseModel
 from pydantic_ai import Agent
 from .config import create_model
-from .prompts import responder_system_prompt, responder_prompt, summarizer_system_prompt, summarizer_prompt, pointer_system_prompt, pointer_prompt
+from .prompts import summarizer_with_feedback_prompt,summarizer_system_prompt, summarizer_prompt, critic_system_prompt, critic_prompt
     
-class Responder:
-
-    def __init__(self, ):
-        
-        self.agent = Agent(
-            model=create_model(),
-            system_prompt=responder_system_prompt,
-            output_type=str,
-        )
-
-    async def respond(self, pointer_output : str, summarizer_output : str, query : str):
-
-        return await self.agent.run(responder_prompt.format(pointer_output=pointer_output, summarizer_output=summarizer_output, query=query))
-
 class Summarizer:
 
     def __init__(self, ):
@@ -28,21 +15,32 @@ class Summarizer:
 
     async def summarize(self, query : str):
 
-        return await self.agent.run(summarizer_prompt.format(query=query))
+        result = await self.agent.run(summarizer_prompt.format(query=query))
+        return result.output
 
+    async def summarizewithfeedback(self, query : str, feedback:str):
 
-class Pointer:
+        result = await self.agent.run(summarizer_with_feedback_prompt.format(query=query,feedback=feedback))
+        return result.output
+
+class CriticOutput(BaseModel):
+    satisfied : bool 
+    reason : str | None = None
+    feedback : str | None = None
+
+class Critic:
     def __init__(self,):
 
         self.agent = Agent(
             model=create_model(),
-            system_prompt=pointer_system_prompt,
-            output_type=str,
+            system_prompt=critic_system_prompt,
+            output_type=CriticOutput,
         )
 
-    async def point(self, query : str):
+    async def critics(self, query : str):
 
-        return await self.agent.run(pointer_prompt.format(query=query))
+        result = await self.agent.run(critic_prompt.format(query=query))
+        return result.output
 
 
 

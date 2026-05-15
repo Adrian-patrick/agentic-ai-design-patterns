@@ -5,12 +5,11 @@ class State(BaseModel):
     """The state of the agent."""
     query : str
     summarizer_response : Optional[str] = None
-    pointer_response : Optional[str] = None
-    responder_response : Optional[str] = None
+    critic_response : Any | None = None
+    max_iterations : Optional[int] = 3
     
 class Dependencies(BaseModel):
-    """The dependencies of the agent."""
+    """The dependencies of the graph."""
     summarizer : Any
-    pointer : Any
-    responder : Any
+    critic : Any
 

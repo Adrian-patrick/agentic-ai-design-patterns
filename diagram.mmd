@@ -1,48 +1,42 @@
 graph TD
-    Start[Big Job to Do] --> Look[Look at the Work]
-    Look --> Split[Split Into Smaller Pieces]
+    Start[Initial Request] --> Generate[Generate First Draft]
+    Generate --> Output1[Initial Output]
     
-    Split --> Check{Do We Have Resources?}
-    Check -->|Yes| Start_Workers[Start Multiple Workers]
-    Check -->|Limited| Queue[Take Turns with Limited Workers]
+    Output1 --> Critic{Critic Agent Review}
     
-    Start_Workers --> W1[Worker 1: Do Piece A]
-    Start_Workers --> W2[Worker 2: Do Piece B]
-    Start_Workers --> W3[Worker 3: Do Piece C]
-    Start_Workers --> W4[Worker 4: Do Piece D]
-    Queue --> Batch[Work in Small Groups]
+    Critic --> Rubric[Apply Quality Rubrics]
+    Critic --> Tests[Run Unit Tests]
+    Critic --> Check[Grammar & Logic Check]
     
-    W1 --> Try1{Did It Work?}
-    W2 --> Try2{Did It Work?}
-    W3 --> Try3{Did It Work?}
-    W4 --> Try4{Did It Work?}
-    Batch --> Try5{Did It Work?}
+    Rubric --> Score1{Quality Score}
+    Tests --> Score2{Test Results}
+    Check --> Score3{Check Results}
     
-    Try1 -->|Yes| Collect[Collect All Results]
-    Try1 -->|No| Wait1[Wait and Try Again]
-    Try2 -->|Yes| Collect
-    Try2 -->|No| Wait2[Wait and Try Again]
-    Try3 -->|Yes| Collect
-    Try3 -->|No| Wait3[Wait and Try Again]
-    Try4 -->|Yes| Collect
-    Try4 -->|No| Wait4[Wait and Try Again]
-    Try5 -->|Yes| Collect
-    Try5 -->|No| Wait5[Wait and Try Again]
+    Score1 --> Evaluate{Meets Criteria?}
+    Score2 --> Evaluate
+    Score3 --> Evaluate
     
-    Wait1 --> W1
-    Wait2 --> W2
-    Wait3 --> W3
-    Wait4 --> W4
-    Wait5 --> Batch
+    Evaluate -->|No| Feedback[Generate Structured Feedback]
+    Evaluate -->|Yes| Accept[Accept Output]
     
-    Collect --> Organize[Organize Results]
-    Organize --> Combine[Combine Everything]
-    Combine --> Final[Create Final Result]
-    Final --> Summary[Create Summary Report]
-    Summary --> End[Job Complete]
+    Feedback --> Revise[Revision Agent]
+    Revise --> Address[Address Each Issue]
+    Address --> Output2[Revised Output]
+    
+    Output2 --> Counter{Iteration Count}
+    Counter -->|< Max| Critic
+    Counter -->|>= Max| Converge[Use Best Version]
+    
+    Accept --> Record[Record Success Patterns]
+    Converge --> Record
+    
+    Record --> Learn[Update Prompts/Rules]
+    Learn --> Final[Final Output]
+    Final --> End[Deliver Result]
 
     style Start fill:#e1f5fe
-    style Start_Workers fill:#fff59d
-    style Collect fill:#f3e5f5
+    style Critic fill:#fff59d
+    style Evaluate fill:#fff9c4
+    style Accept fill:#c8e6c9
+    style Converge fill:#ffccbc
     style End fill:#c8e6c9
-    style Check fill:#fff9c4
