@@ -1,32 +1,33 @@
-# Parallelization
+# Reflection
 
-A multi-agent orchestration system demonstrating the **Parallelization Pattern** (Worker-Aggregator) using `pydantic-ai` and `pydantic-graph`.
+A multi-agent orchestration system demonstrating the **Evaluator-Optimizer** pattern (also known as the **Reflection** pattern) using `pydantic-ai` and `pydantic-graph`.
 
 ## Project Overview
 
-This project implements a parallelized agentic workflow designed for high-efficiency content analysis. Instead of processing tasks sequentially, the system executes multiple specialized analytical agents simultaneously and then aggregates their findings into a cohesive, professional response.
+This project implements an iterative refinement workflow where a **Summarizer** agent generates content and a **Critic** agent evaluates it. The system uses a feedback loop to continuously improve the quality of the output until it meets a specific satisfaction threshold or reaches a maximum number of iterations.
 
 ### Architectural Workflow
-1. **Worker Node**: The primary entry point that triggers concurrent execution.
-   - **Summarizer (Worker 1)**: Generates a high-level executive summary of the input content.
-   - **Pointer (Worker 2)**: Extracts critical key points and strategic insights.
-2. **Parallel Execution**: Uses `asyncio.gather` to run the Summarizer and Pointer in parallel, significantly reducing total processing latency.
-3. **Response Node (Aggregator)**: Synthesizes the outputs from both workers.
-   - **Responder**: Creates a brief, cited final report that attributes information back to its source (Summarizer or Pointer).
+1. **Initial Generation**: The `Summarizer` agent creates an initial executive summary based on the raw input content.
+2. **Critical Evaluation**: The `Critic` agent analyzes the generated summary and produces a structured `CriticOutput` containing:
+   - `satisfied`: A boolean flag indicating if the quality meets requirements.
+   - `feedback`: Specific instructions for improvement if not satisfied.
+   - `reason`: The rationale behind the evaluation.
+3. **Iterative Refinement**: If the `Critic` is not satisfied, the `Summarizer` receives the feedback and generates an improved version of the summary.
+4. **Termination**: The loop ends when the `Critic` sets `satisfied=True` or the system reaches the `max_iterations` limit (default: 3).
 
 ## Technology Stack
 - **Framework**: [pydantic-ai](https://ai.pydantic.dev/) & [pydantic-graph](https://ai.pydantic.dev/graph/)
 - **LLM Provider**: Azure OpenAI
-- **Concurrency**: `asyncio` for parallel agent execution
+- **Structured Output**: Pydantic models for reliable agent-to-agent communication
 - **Environment**: Python 3.13+, Managed via `uv`
 
 ## Project Structure
-- `main.py`: Entry point for running the parallel graph with sample content.
+- `main.py`: Entry point for running the iterative graph.
 - `agentic_system/`:
-    - `graph.py`: Defines the `WorkerNode` and `ResponseNode` with parallel orchestration logic.
-    - `agents.py`: Implementations for the `Summarizer`, `Pointer`, and `Responder` agents.
-    - `models.py`: Shared `State` and `Dependencies`.
-    - `prompts.py`: Optimized prompts for synthesis and citation.
+    - `graph.py`: Defines the `SummarizerCriticNode` which orchestrates the refinement loop.
+    - `agents.py`: Implementations for the `Summarizer` and `Critic` agents.
+    - `models.py`: Shared `State` (tracking iterations and feedback) and `Dependencies`.
+    - `prompts.py`: Optimized prompts for generation and critical reflection.
     - `config.py`: Azure OpenAI configuration.
 
 ## Getting Started
