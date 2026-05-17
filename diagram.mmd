@@ -1,42 +1,51 @@
 graph TD
-    Start[Initial Request] --> Generate[Generate First Draft]
-    Generate --> Output1[Initial Output]
+    Start[User Request] --> Analyze[Analyze Task Requirements]
+    Analyze --> Discover[Discover Available Tools]
     
-    Output1 --> Critic{Critic Agent Review}
+    Discover --> Catalog[Tool Catalog]
+    Catalog --> API1[Web Search API]
+    Catalog --> API2[Database Query Tool]
+    Catalog --> API3[Calculator Function]
+    Catalog --> API4[File System Access]
+    Catalog --> API5[External Service API]
     
-    Critic --> Rubric[Apply Quality Rubrics]
-    Critic --> Tests[Run Unit Tests]
-    Critic --> Check[Grammar & Logic Check]
+    Catalog --> Select{Select Appropriate Tool}
     
-    Rubric --> Score1{Quality Score}
-    Tests --> Score2{Test Results}
-    Check --> Score3{Check Results}
+    Select --> Match[Match Capabilities to Need]
+    Match --> Safety{Safety Check}
     
-    Score1 --> Evaluate{Meets Criteria?}
-    Score2 --> Evaluate
-    Score3 --> Evaluate
+    Safety -->|Pass| Prepare[Prepare Tool Call]
+    Safety -->|Fail| Deny[Deny Access with Reason]
     
-    Evaluate -->|No| Feedback[Generate Structured Feedback]
-    Evaluate -->|Yes| Accept[Accept Output]
+    Prepare --> Validate[Validate Input Parameters]
+    Validate --> Call[Execute Tool with Arguments]
     
-    Feedback --> Revise[Revision Agent]
-    Revise --> Address[Address Each Issue]
-    Address --> Output2[Revised Output]
+    Call --> Handle{Handle Response}
+    Handle -->|Success| Parse[Parse Tool Output]
+    Handle -->|Error| ErrorHandle[Error Recovery]
+    Handle -->|Timeout| Retry[Retry with Backoff]
     
-    Output2 --> Counter{Iteration Count}
-    Counter -->|< Max| Critic
-    Counter -->|>= Max| Converge[Use Best Version]
+    ErrorHandle --> Fallback[Use Fallback Method]
+    Retry --> Call
     
-    Accept --> Record[Record Success Patterns]
-    Converge --> Record
+    Parse --> Normalize[Normalize for LLM]
+    Fallback --> Normalize
     
-    Record --> Learn[Update Prompts/Rules]
-    Learn --> Final[Final Output]
-    Final --> End[Deliver Result]
+    Normalize --> Process[Process with Context]
+    Process --> Decision{Next Action?}
+    
+    Decision -->|More Tools| Select
+    Decision -->|Complete| Audit[Audit Tool Usage]
+    
+    Deny --> Log[Log Security Event]
+    Audit --> Redact[Redact Sensitive Data]
+    Log --> Redact
+    
+    Redact --> Result[Generate Final Response]
+    Result --> End[Return to User]
 
     style Start fill:#e1f5fe
-    style Critic fill:#fff59d
-    style Evaluate fill:#fff9c4
-    style Accept fill:#c8e6c9
-    style Converge fill:#ffccbc
+    style Select fill:#fff59d
+    style Safety fill:#ffccbc
+    style Handle fill:#fff9c4
     style End fill:#c8e6c9

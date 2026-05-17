@@ -1,88 +1,83 @@
-# Reflection Pattern
+# Tool Use (Function Calling) Pattern
 
 ## When to Use
 
-- **Quality-critical outputs**: When high accuracy and quality are non-negotiable
-- **Complex reasoning tasks**: When problems require iterative refinement
-- **Creative work**: When content needs multiple rounds of improvement
-- **Learning systems**: When you want to improve performance over time
-- **Error-prone domains**: When initial attempts often have mistakes
-- **Compliance requirements**: When outputs must meet specific standards
+- **External data access**: When agents need real-time or dynamic information
+- **System integration**: When connecting to databases, APIs, or services
+- **Computational tasks**: When precise calculations or data processing is needed
+- **File operations**: When reading, writing, or manipulating files
+- **Action execution**: When agents need to perform concrete actions
+- **Multi-step workflows**: When combining AI reasoning with tool execution
 
 ## Where It Fits
 
-- **Content creation**: Blog posts, reports, and documentation requiring polish
-- **Code generation**: Producing bug-free, optimized code
-- **Legal document drafting**: Ensuring accuracy and completeness
-- **Academic writing**: Research papers needing fact-checking and citations
-- **Product descriptions**: E-commerce content requiring SEO and accuracy
+- **Research assistants**: Web search, document retrieval, fact-checking
+- **Data analysis workflows**: Database queries, calculations, visualizations
+- **DevOps automation**: System commands, deployment tools, monitoring
+- **Customer service**: CRM access, ticket management, knowledge base queries
+- **Content management**: File operations, publishing tools, asset management
 
 ## Pros
 
-- **Quality improvement**: Systematic enhancement through multiple iterations
-- **Error reduction**: Catches and fixes mistakes before final delivery
-- **Objectivity**: Separation of generation and critique roles
-- **Learning capability**: System improves over time from patterns
-- **Transparency**: Clear feedback trail for improvements
-- **Flexibility**: Can adjust critique criteria for different use cases
-- **Consistency**: Applies same quality standards uniformly
+- **Capability extension**: Agents can perform actions beyond text generation
+- **Real-time data**: Access to current information not in training data
+- **Precision**: Exact calculations and deterministic operations
+- **Integration**: Seamless connection to existing systems and services
+- **Automation**: Complete end-to-end workflows without human intervention
+- **Flexibility**: Dynamic tool selection based on task requirements
+- **Auditability**: Clear log of all tool usage and parameters
 
 ## Cons
 
-- **Increased latency**: Multiple iterations multiply processing time
-- **Higher costs**: Each reflection cycle incurs additional API calls
-- **Context window limits**: Long documents may exceed token limits
-- **Diminishing returns**: Later iterations may provide minimal improvement
-- **Over-optimization**: Risk of making content generic or losing voice
-- **Complexity**: Requires careful tuning of critique criteria
-- **API throttling**: Multiple rapid calls may hit rate limits
+- **Security risks**: Tool access must be carefully controlled
+- **Error propagation**: Tool failures can break entire workflows
+- **Latency addition**: Each tool call adds processing time
+- **Cost accumulation**: External API calls may incur charges
+- **Complexity**: Managing tool schemas and error handling
+- **Dependency risks**: Reliance on external services availability
+- **Data sensitivity**: Need careful handling of credentials and private data
 
 ## Real-World Examples
 
-1. **Technical Blog Post Creation**:
-   - Initial draft generation
-   - Technical accuracy review
-   - Code example validation
-   - SEO optimization check
-   - Readability improvements
-   - Final grammar and style polish
+1. **Financial Analysis Assistant**:
+   - Stock price API for real-time quotes
+   - Calculator for portfolio calculations
+   - Database queries for historical data
+   - Chart generation tools for visualizations
+   - Email API for report distribution
 
-2. **Contract Generation System**:
-   - Draft initial contract terms
-   - Legal compliance review
-   - Risk assessment critique
-   - Clarity and ambiguity check
-   - Client-specific customization
-   - Final legal review
+2. **Code Development Helper**:
+   - File system access for reading/writing code
+   - Compiler/interpreter for code execution
+   - Git commands for version control
+   - Testing frameworks for validation
+   - Documentation generators
 
-3. **Educational Content Development**:
-   - Create lesson content
-   - Pedagogical effectiveness review
-   - Factual accuracy verification
-   - Age-appropriateness check
-   - Engagement factor assessment
-   - Accessibility improvements
+3. **E-commerce Order Management**:
+   - Inventory database queries
+   - Payment processing APIs
+   - Shipping service integrations
+   - Email/SMS notification tools
+   - CRM system updates
 
-4. **Software Documentation**:
-   - Generate API documentation
-   - Technical accuracy review
-   - Code example testing
-   - Completeness check
-   - Clarity improvements
-   - Version consistency validation
+4. **Research Paper Assistant**:
+   - Academic database searches (PubMed, arXiv)
+   - Citation management tools
+   - PDF parsing and extraction
+   - Reference formatting tools
+   - Plagiarism checking APIs
 
-5. **Marketing Copy Refinement**:
-   - Initial copy generation
-   - Brand voice alignment check
-   - Persuasiveness assessment
-   - Fact and claim verification
-   - SEO keyword optimization
-   - A/B test variant creation
+5. **Smart Home Controller**:
+   - IoT device APIs (lights, thermostats)
+   - Weather service integration
+   - Calendar access for scheduling
+   - Energy monitoring tools
+   - Security system controls
 
-6. **Research Report Writing**:
-   - Draft research findings
-   - Methodology critique
-   - Statistical validation
-   - Citation verification
-   - Logical flow improvement
-   - Executive summary refinement
+6. **HR Recruitment System**:
+   - Resume parsing tools
+   - LinkedIn/job board APIs
+   - Calendar scheduling tools
+   - Email automation
+   - Background check services
+   - Video interview platforms

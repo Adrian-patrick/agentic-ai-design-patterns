@@ -1,39 +1,36 @@
-# Reflection
+# Tool Use Architecture
 
-A multi-agent orchestration system demonstrating the **Evaluator-Optimizer** pattern (also known as the **Reflection** pattern) using `pydantic-ai` and `pydantic-graph`.
+A multi-agent orchestration system demonstrating the **Tool Use (Function Calling)** pattern using `pydantic-ai` and `pydantic-graph`.
 
 ## Project Overview
 
-This project implements an iterative refinement workflow where a **Summarizer** agent generates content and a **Critic** agent evaluates it. The system uses a feedback loop to continuously improve the quality of the output until it meets a specific satisfaction threshold or reaches a maximum number of iterations.
+This project implements a tool-driven workflow where a **ToolAgent** leverages external capabilities (such as web search and calculation) to gather necessary data for a query, and a **ResponseAgent** synthesizes this data into a final, comprehensive response.
 
 ### Architectural Workflow
-1. **Initial Generation**: The `Summarizer` agent creates an initial executive summary based on the raw input content.
-2. **Critical Evaluation**: The `Critic` agent analyzes the generated summary and produces a structured `CriticOutput` containing:
-   - `satisfied`: A boolean flag indicating if the quality meets requirements.
-   - `feedback`: Specific instructions for improvement if not satisfied.
-   - `reason`: The rationale behind the evaluation.
-3. **Iterative Refinement**: If the `Critic` is not satisfied, the `Summarizer` receives the feedback and generates an improved version of the summary.
-4. **Termination**: The loop ends when the `Critic` sets `satisfied=True` or the system reaches the `max_iterations` limit (default: 3).
+1. **Tool Execution**: The `ToolAgent` receives the user query and uses its available tools (DuckDuckGo Search, Calculator) to gather relevant real-world or computational data.
+2. **Response Synthesis**: The `ResponseAgent` takes the context and data gathered by the `ToolAgent` along with the original user query, and formulates a final, well-structured answer.
+3. **Graph Orchestration**: The workflow is managed via a stateful graph transitioning from `StartNode` -> `ToolNode` -> `ResponseNode`.
 
 ## Technology Stack
 - **Framework**: [pydantic-ai](https://ai.pydantic.dev/) & [pydantic-graph](https://ai.pydantic.dev/graph/)
 - **LLM Provider**: Azure OpenAI
-- **Structured Output**: Pydantic models for reliable agent-to-agent communication
+- **Tools**: DuckDuckGo Search (`ddgs`), Python `eval` (Calculator)
 - **Environment**: Python 3.13+, Managed via `uv`
 
 ## Project Structure
-- `main.py`: Entry point for running the iterative graph.
+- `main.py`: Entry point for running the agentic graph.
 - `agentic_system/`:
-    - `graph.py`: Defines the `SummarizerCriticNode` which orchestrates the refinement loop.
-    - `agents.py`: Implementations for the `Summarizer` and `Critic` agents.
-    - `models.py`: Shared `State` (tracking iterations and feedback) and `Dependencies`.
-    - `prompts.py`: Optimized prompts for generation and critical reflection.
+    - `graph.py`: Defines the `ToolNode` and `ResponseNode` which orchestrate the workflow.
+    - `agents.py`: Implementations for the `ToolAgent` (containing `@agent.tool` definitions) and `ResponseAgent`.
+    - `models.py`: Shared `State` (tracking responses) and `Dependencies`.
+    - `prompts.py`: Optimized system prompts for data gathering and response formulation.
     - `config.py`: Azure OpenAI configuration.
 
 ## Getting Started
 
 1. Configure your `.env` file with Azure OpenAI credentials.
-2. Run the system:
+2. Ensure you have dependencies installed (managed automatically via `uv run`).
+3. Run the system:
    ```bash
-   uv run python main.py
+   uv run main.py
    ```
