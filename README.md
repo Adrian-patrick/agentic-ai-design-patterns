@@ -1,15 +1,15 @@
-# Tool Use Architecture
+# Planner-Worker Architecture
 
-A multi-agent orchestration system demonstrating the **Tool Use (Function Calling)** pattern using `pydantic-ai` and `pydantic-graph`.
+A multi-agent orchestration system demonstrating the **Planner-Worker** pattern using `pydantic-ai` and `pydantic-graph`.
 
 ## Project Overview
 
-This project implements a tool-driven workflow where a **ToolAgent** leverages external capabilities (such as web search and calculation) to gather necessary data for a query, and a **ResponseAgent** synthesizes this data into a final, comprehensive response.
+This project implements a planning and execution workflow where a **PlannerAgent** breaks down a complex query into a step-by-step executable plan, and a **WorkerAgent** uses external capabilities (such as web search and calculation) to execute the plan and formulate the final response.
 
 ### Architectural Workflow
-1. **Tool Execution**: The `ToolAgent` receives the user query and uses its available tools (DuckDuckGo Search, Calculator) to gather relevant real-world or computational data.
-2. **Response Synthesis**: The `ResponseAgent` takes the context and data gathered by the `ToolAgent` along with the original user query, and formulates a final, well-structured answer.
-3. **Graph Orchestration**: The workflow is managed via a stateful graph transitioning from `StartNode` -> `ToolNode` -> `ResponseNode`.
+1. **Planning Phase**: The `PlannerAgent` receives the user query and generates a structured, step-by-step plan.
+2. **Execution Phase**: The `WorkerAgent` receives the original query and the execution plan. It then leverages its available tools (DuckDuckGo Search, Calculator) to gather necessary data and synthesize the final response.
+3. **Graph Orchestration**: The workflow is managed via a stateful graph transitioning from `StartNode` -> `PlannerNode` -> `WorkerNode`.
 
 ## Technology Stack
 - **Framework**: [pydantic-ai](https://ai.pydantic.dev/) & [pydantic-graph](https://ai.pydantic.dev/graph/)
@@ -20,10 +20,10 @@ This project implements a tool-driven workflow where a **ToolAgent** leverages e
 ## Project Structure
 - `main.py`: Entry point for running the agentic graph.
 - `agentic_system/`:
-    - `graph.py`: Defines the `ToolNode` and `ResponseNode` which orchestrate the workflow.
-    - `agents.py`: Implementations for the `ToolAgent` (containing `@agent.tool` definitions) and `ResponseAgent`.
-    - `models.py`: Shared `State` (tracking responses) and `Dependencies`.
-    - `prompts.py`: Optimized system prompts for data gathering and response formulation.
+    - `graph.py`: Defines the `PlannerNode` and `WorkerNode` which orchestrate the workflow.
+    - `agents.py`: Implementations for the `PlannerAgent` and `WorkerAgent` (containing `@agent.tool` definitions).
+    - `models.py`: Shared `State` (tracking plans and responses) and `Dependencies`.
+    - `prompts.py`: Optimized system prompts for planning and execution.
     - `config.py`: Azure OpenAI configuration.
 
 ## Getting Started

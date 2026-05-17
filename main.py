@@ -1,6 +1,10 @@
 import asyncio
+import sys
 from agentic_system.prompts import query
 from agentic_system.graph import run_graph
+
+if sys.platform.startswith('win'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 async def main():
     """Main entry point to run the agentic system graph."""

@@ -1,83 +1,88 @@
-# Tool Use (Function Calling) Pattern
+# Planning Pattern
 
 ## When to Use
 
-- **External data access**: When agents need real-time or dynamic information
-- **System integration**: When connecting to databases, APIs, or services
-- **Computational tasks**: When precise calculations or data processing is needed
-- **File operations**: When reading, writing, or manipulating files
-- **Action execution**: When agents need to perform concrete actions
-- **Multi-step workflows**: When combining AI reasoning with tool execution
+- **Complex multi-step projects**: When tasks have multiple dependencies and phases
+- **Goal-oriented workflows**: When working toward specific, measurable objectives
+- **Resource-constrained operations**: When managing budgets, time, or computational limits
+- **Uncertain environments**: When adaptability to changing conditions is needed
+- **Collaborative tasks**: When coordinating multiple agents or tools
+- **Long-running processes**: When tasks span extended timeframes
 
 ## Where It Fits
 
-- **Research assistants**: Web search, document retrieval, fact-checking
-- **Data analysis workflows**: Database queries, calculations, visualizations
-- **DevOps automation**: System commands, deployment tools, monitoring
-- **Customer service**: CRM access, ticket management, knowledge base queries
-- **Content management**: File operations, publishing tools, asset management
+- **Project management automation**: Breaking down projects into executable tasks
+- **Software development**: Planning features from requirements to deployment
+- **Research projects**: Organizing literature review, experimentation, and analysis
+- **Content production**: Planning multi-part content series or campaigns
+- **Business process automation**: Orchestrating complex business workflows
 
 ## Pros
 
-- **Capability extension**: Agents can perform actions beyond text generation
-- **Real-time data**: Access to current information not in training data
-- **Precision**: Exact calculations and deterministic operations
-- **Integration**: Seamless connection to existing systems and services
-- **Automation**: Complete end-to-end workflows without human intervention
-- **Flexibility**: Dynamic tool selection based on task requirements
-- **Auditability**: Clear log of all tool usage and parameters
+- **Strategic execution**: Transforms reactive agents into proactive planners
+- **Dependency management**: Handles complex task interdependencies
+- **Resource optimization**: Allocates resources efficiently across steps
+- **Adaptability**: Can adjust plans based on new information
+- **Progress visibility**: Clear tracking of milestone completion
+- **Risk mitigation**: Early identification of blockers and issues
+- **Reusability**: Plans can be templated and reused
 
 ## Cons
 
-- **Security risks**: Tool access must be carefully controlled
-- **Error propagation**: Tool failures can break entire workflows
-- **Latency addition**: Each tool call adds processing time
-- **Cost accumulation**: External API calls may incur charges
-- **Complexity**: Managing tool schemas and error handling
-- **Dependency risks**: Reliance on external services availability
-- **Data sensitivity**: Need careful handling of credentials and private data
+- **Upfront overhead**: Planning phase adds initial latency
+- **Rigidity risk**: Over-planning can reduce flexibility
+- **Complexity**: Managing plan state and dependencies is challenging
+- **Prediction errors**: Initial plans may be based on incorrect assumptions
+- **Replanning costs**: Adjusting plans mid-execution can be expensive
+- **Context limitations**: Long plans may exceed context windows
+- **Coordination overhead**: Managing multiple agents increases complexity
 
 ## Real-World Examples
 
-1. **Financial Analysis Assistant**:
-   - Stock price API for real-time quotes
-   - Calculator for portfolio calculations
-   - Database queries for historical data
-   - Chart generation tools for visualizations
-   - Email API for report distribution
+1. **Software Feature Development**:
+   - Requirements analysis and design
+   - Development task breakdown
+   - Testing strategy planning
+   - Deployment scheduling
+   - Documentation preparation
+   - Rollback planning
 
-2. **Code Development Helper**:
-   - File system access for reading/writing code
-   - Compiler/interpreter for code execution
-   - Git commands for version control
-   - Testing frameworks for validation
-   - Documentation generators
+2. **Marketing Campaign Execution**:
+   - Market research and analysis
+   - Content creation schedule
+   - Channel selection and timing
+   - Budget allocation
+   - Performance monitoring setup
+   - A/B testing plans
 
-3. **E-commerce Order Management**:
-   - Inventory database queries
-   - Payment processing APIs
-   - Shipping service integrations
-   - Email/SMS notification tools
-   - CRM system updates
+3. **Academic Research Project**:
+   - Literature review planning
+   - Hypothesis formulation
+   - Experiment design
+   - Data collection schedule
+   - Analysis methodology
+   - Publication timeline
 
-4. **Research Paper Assistant**:
-   - Academic database searches (PubMed, arXiv)
-   - Citation management tools
-   - PDF parsing and extraction
-   - Reference formatting tools
-   - Plagiarism checking APIs
+4. **Data Migration Project**:
+   - Data audit and mapping
+   - Schema design
+   - Migration script development
+   - Testing phases
+   - Rollout schedule
+   - Validation checkpoints
 
-5. **Smart Home Controller**:
-   - IoT device APIs (lights, thermostats)
-   - Weather service integration
-   - Calendar access for scheduling
-   - Energy monitoring tools
-   - Security system controls
+5. **Product Launch Planning**:
+   - Development milestones
+   - Marketing preparation
+   - Sales enablement
+   - Support documentation
+   - Launch event coordination
+   - Post-launch monitoring
 
-6. **HR Recruitment System**:
-   - Resume parsing tools
-   - LinkedIn/job board APIs
-   - Calendar scheduling tools
-   - Email automation
-   - Background check services
-   - Video interview platforms
+6. **Compliance Audit Preparation**:
+   - Requirement identification
+   - Document gathering
+   - Gap analysis
+   - Remediation planning
+   - Review scheduling
+   - Report generation

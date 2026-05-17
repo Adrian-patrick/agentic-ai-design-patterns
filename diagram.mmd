@@ -1,51 +1,52 @@
 graph TD
-    Start[User Request] --> Analyze[Analyze Task Requirements]
-    Analyze --> Discover[Discover Available Tools]
+    Start[Goal Input] --> Decompose[Decompose into Milestones]
+    Decompose --> Map[Create Dependency Graph]
     
-    Discover --> Catalog[Tool Catalog]
-    Catalog --> API1[Web Search API]
-    Catalog --> API2[Database Query Tool]
-    Catalog --> API3[Calculator Function]
-    Catalog --> API4[File System Access]
-    Catalog --> API5[External Service API]
+    Map --> Constraints{Check Constraints}
+    Constraints --> Data[Data Availability]
+    Constraints --> Auth[Authorization Check]
+    Constraints --> Budget[Budget Limits]
+    Constraints --> Time[Deadlines/SLAs]
     
-    Catalog --> Select{Select Appropriate Tool}
+    Data --> Plan[Generate Step-by-Step Plan]
+    Auth --> Plan
+    Budget --> Plan
+    Time --> Plan
     
-    Select --> Match[Match Capabilities to Need]
-    Match --> Safety{Safety Check}
+    Plan --> Assign[Assign Agent/Tool per Step]
+    Assign --> Step1[Execute Step 1]
     
-    Safety -->|Pass| Prepare[Prepare Tool Call]
-    Safety -->|Fail| Deny[Deny Access with Reason]
+    Step1 --> Check1{Checkpoint}
+    Check1 -->|Success| Step2[Execute Step 2]
+    Check1 -->|Blocked| Analyze[Analyze Blocker]
     
-    Prepare --> Validate[Validate Input Parameters]
-    Validate --> Call[Execute Tool with Arguments]
+    Step2 --> Check2{Checkpoint}
+    Check2 -->|Success| Step3[Execute Step 3]
+    Check2 -->|Issue| Analyze
     
-    Call --> Handle{Handle Response}
-    Handle -->|Success| Parse[Parse Tool Output]
-    Handle -->|Error| ErrorHandle[Error Recovery]
-    Handle -->|Timeout| Retry[Retry with Backoff]
+    Step3 --> Check3{Checkpoint}
+    Check3 -->|Success| StepN[Execute Step N]
+    Check3 -->|Problem| Analyze
     
-    ErrorHandle --> Fallback[Use Fallback Method]
-    Retry --> Call
+    Analyze --> NewInfo{New Information?}
+    NewInfo -->|Yes| Replan[Adjust Plan]
+    NewInfo -->|No| Escalate[Escalate Issue]
     
-    Parse --> Normalize[Normalize for LLM]
-    Fallback --> Normalize
+    Replan --> Assign
+    Escalate --> Handle[Handle Exception]
     
-    Normalize --> Process[Process with Context]
-    Process --> Decision{Next Action?}
+    StepN --> Progress[Track Progress]
+    Progress --> Complete{Goals Met?}
     
-    Decision -->|More Tools| Select
-    Decision -->|Complete| Audit[Audit Tool Usage]
+    Complete -->|Yes| Accept[Acceptance Criteria Check]
+    Complete -->|No| Analyze
     
-    Deny --> Log[Log Security Event]
-    Audit --> Redact[Redact Sensitive Data]
-    Log --> Redact
-    
-    Redact --> Result[Generate Final Response]
-    Result --> End[Return to User]
+    Accept --> PostMortem[Generate Post-Mortem]
+    Handle --> PostMortem
+    PostMortem --> End[Close Task]
 
     style Start fill:#e1f5fe
-    style Select fill:#fff59d
-    style Safety fill:#ffccbc
-    style Handle fill:#fff9c4
+    style Constraints fill:#fff9c4
+    style NewInfo fill:#fff59d
+    style Complete fill:#f3e5f5
     style End fill:#c8e6c9
