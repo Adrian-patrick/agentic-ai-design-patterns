@@ -2,80 +2,54 @@ from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
 from .config import create_model
 from .prompts import (
-    classifier_system_prompt,
-    orchestrator_system_prompt,
-    summarizer_system_prompt,
-    pointer_system_prompt,
+    responder_system_prompt,
+    memory_classifier_system_prompt,
+    compressor_system_prompt,
 )
-from .models import ClassifierOutput, OrchestratorInstructions
+from .models import MemoryClassifierOutput
 
-class ClassifierAgent:
+class ResponderAgent:
     def __init__(self):
         self.agent = Agent(
             model=create_model(),
-            system_prompt=classifier_system_prompt,
-            output_type=ClassifierOutput,
-        )
-
-    async def run(self, query: str) -> ClassifierOutput:
-        result = await self.agent.run(query)
-        return result.output
-
-class OrchestratorAgent:
-    def __init__(self):
-        self.delegator_agent = Agent(
-            model=create_model(),
-            system_prompt=orchestrator_system_prompt,
-            output_type=OrchestratorInstructions,
-        )
-        self.synthesizer_agent = Agent(
-            model=create_model(),
-            system_prompt=orchestrator_system_prompt,
+            system_prompt=responder_system_prompt,
             output_type=str,
         )
 
-    async def delegate(self, query: str, requires_summarizer: bool, requires_pointer: bool) -> OrchestratorInstructions:
+    async def run(self, query: str, loaded_memories: list[str], short_term_buffer: list[str]) -> str:
         prompt = (
-            f"Original Query: {query}\n"
-            f"Requires Summarizer: {requires_summarizer}\n"
-            f"Requires Pointer: {requires_pointer}\n\n"
-            "Please generate precise instructions for the required sub-agents."
+            f"User Query: {query}\n\n"
+            f"Loaded Memories:\n" + "\n".join(loaded_memories) + "\n\n"
+            f"Short-Term Buffer:\n" + "\n".join(short_term_buffer)
         )
-        result = await self.delegator_agent.run(prompt)
-        return result.output
-
-    async def synthesize(self, query: str, summarizer_output: str = None, pointer_output: str = None) -> str:
-        prompt = (
-            f"Original Query: {query}\n"
-            f"Summarizer Output: {summarizer_output or 'N/A'}\n"
-            f"Pointer Output: {pointer_output or 'N/A'}\n\n"
-            "Please compile a final response to the original query."
-        )
-        result = await self.synthesizer_agent.run(prompt)
-        return result.output
-
-class SummarizerAgent:
-    def __init__(self):
-        self.agent = Agent(
-            model=create_model(),
-            system_prompt=summarizer_system_prompt,
-            output_type=str,
-        )
-
-    async def run(self, content: str, instructions: str) -> str:
-        prompt = f"Content to summarize:\n{content}\n\nInstructions from orchestrator:\n{instructions}"
         result = await self.agent.run(prompt)
         return result.output
 
-class PointerAgent:
+class MemoryClassifierAgent:
     def __init__(self):
         self.agent = Agent(
             model=create_model(),
-            system_prompt=pointer_system_prompt,
+            system_prompt=memory_classifier_system_prompt,
+            output_type=MemoryClassifierOutput,
+        )
+
+    async def run(self, query: str, response: str) -> MemoryClassifierOutput:
+        prompt = (
+            f"User Query: {query}\n"
+            f"Agent Response: {response}"
+        )
+        result = await self.agent.run(prompt)
+        return result.output
+
+class CompressorAgent:
+    def __init__(self):
+        self.agent = Agent(
+            model=create_model(),
+            system_prompt=compressor_system_prompt,
             output_type=str,
         )
 
-    async def run(self, content: str, instructions: str) -> str:
-        prompt = f"Content to extract key points from:\n{content}\n\nInstructions from orchestrator:\n{instructions}"
+    async def run(self, buffer_turns: list[str]) -> str:
+        prompt = "Turns to summarize and compress:\n" + "\n".join(buffer_turns)
         result = await self.agent.run(prompt)
         return result.output

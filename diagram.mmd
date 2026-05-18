@@ -1,54 +1,62 @@
 graph TD
-    Start[Complex Task] --> Define[Define Specialist Roles]
+    Start[User Interaction] --> Capture[Capture Information]
     
-    Define --> Roles[Agent Role Assignment]
-    Roles --> A1[Research Agent]
-    Roles --> A2[Analysis Agent]
-    Roles --> A3[Writer Agent]
-    Roles --> A4[Reviewer Agent]
-    Roles --> A5[Coordinator Agent]
+    Capture --> Classify{Classify Memory Type}
     
-    Roles --> Setup[Setup Shared Resources]
-    Setup --> Memory[Shared Memory Store]
-    Setup --> Artifacts[Artifact Repository]
-    Setup --> Version[Version Control]
+    Classify -->|Immediate| ShortTerm[Short-Term Memory]
+    Classify -->|Experience| Episodic[Episodic Memory]
+    Classify -->|Knowledge| LongTerm[Long-Term Memory]
     
-    Memory --> Protocol{Coordination Protocol}
-    Artifacts --> Protocol
-    Version --> Protocol
+    ShortTerm --> Buffer[Conversation Buffer]
+    Episodic --> Events[Event Store]
+    LongTerm --> Knowledge[Knowledge Base]
     
-    Protocol -->|Orchestrator| Orchestrate[Central Coordinator]
-    Protocol -->|Mesh| Mesh[Peer-to-Peer]
-    Protocol -->|Pipeline| Pipeline[Sequential Handoff]
+    Buffer --> Compress{Context Window Full?}
+    Compress -->|Yes| Summarize[Summarize & Compress]
+    Compress -->|No| Keep[Keep in Buffer]
     
-    Orchestrate --> Coord[Coordinator Manages Flow]
-    Coord --> Task1[Assign to Research Agent]
-    Task1 --> Hand1[Handoff Contract Check]
-    Hand1 --> Task2[Pass to Analysis Agent]
-    Task2 --> Hand2[Handoff Contract Check]
-    Hand2 --> Task3[Send to Writer Agent]
-    Task3 --> Hand3[Handoff Contract Check]
-    Hand3 --> Task4[Review Agent Validation]
+    Summarize --> Store[Store Summary]
+    Keep --> Current[Current Context]
     
-    Mesh --> Peer[Agents Communicate Directly]
-    Pipeline --> Sequence[Fixed Order Processing]
+    Events --> Index[Index Memories]
+    Knowledge --> Index
+    Store --> Index
     
-    Task4 --> Test{Acceptance Test}
-    Peer --> Test
-    Sequence --> Test
+    Index --> Metadata[Add Metadata]
+    Metadata --> Recency[Recency Score]
+    Metadata --> Frequency[Access Frequency]
+    Metadata --> Topic[Topic Tags]
     
-    Test -->|Pass| Log[Log Conversation Trace]
-    Test -->|Fail| Retry[Retry Collaboration]
+    Current --> Retrieve{Retrieve Relevant?}
+    Retrieve -->|Yes| Query[Query Memory Store]
+    Retrieve -->|No| Process[Process Request]
     
-    Retry --> Simulate[Run Simulation]
-    Simulate --> Protocol
+    Query --> Filter[Apply Filters]
+    Filter --> Role[By Role/Task]
+    Filter --> Time[By Time Range]
+    Filter --> Relevance[By Topic Match]
     
-    Log --> Decision[Record Decisions]
-    Decision --> Output[Consolidated Output]
-    Output --> End[Deliver Result]
+    Role --> Select[Select Memories]
+    Time --> Select
+    Relevance --> Select
+    
+    Select --> TTL{Check TTL}
+    TTL -->|Expired| Forget[Remove/Archive]
+    TTL -->|Valid| Load[Load to Context]
+    
+    Forget --> Audit[Audit Trail]
+    Load --> Process
+    
+    Process --> Privacy{Privacy Check}
+    Privacy -->|Sensitive| Redact[Redact Data]
+    Privacy -->|Safe| Write[Write to Memory]
+    
+    Redact --> Write
+    Write --> Update[Update Memories]
+    Update --> End[Continue Interaction]
 
     style Start fill:#e1f5fe
-    style Protocol fill:#fff59d
-    style Test fill:#fff9c4
-    style Output fill:#f3e5f5
+    style Classify fill:#fff59d
+    style Compress fill:#fff9c4
+    style Privacy fill:#ffccbc
     style End fill:#c8e6c9

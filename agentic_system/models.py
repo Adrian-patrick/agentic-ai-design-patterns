@@ -1,29 +1,28 @@
 from typing import Any, Optional, List
 from pydantic import BaseModel
 
-class ClassifierOutput(BaseModel):
-    requires_summarizer: bool
-    requires_pointer: bool
+class MemoryItem(BaseModel):
+    content: str
+    category: str  # 'Short-Term', 'Episodic', 'Long-Term'
+    tags: List[str] = []
 
-class OrchestratorInstructions(BaseModel):
-    summarizer_instruction: Optional[str] = None
-    pointer_instruction: Optional[str] = None
+class MemoryClassifierOutput(BaseModel):
+    has_new_memories: bool
+    memories: List[MemoryItem] = []
 
 class State(BaseModel):
     """The state of the agent."""
     query : str
-    content: str = ""
-    requires_summarizer: bool = False
-    requires_pointer: bool = False
-    summarizer_instruction: Optional[str] = None
-    pointer_instruction: Optional[str] = None
-    summarizer_output: Optional[str] = None
-    pointer_output: Optional[str] = None
-    final_response: Optional[str] = None
+    response: Optional[str] = None
+    loaded_memories: List[str] = []
     
+    # Memory stores (normally in a database, here in state)
+    short_term_buffer: List[str] = []  # Conversation buffer
+    episodic_memory: List[MemoryItem] = []  # Experience event store
+    long_term_memory: List[MemoryItem] = []  # Knowledge base
+
 class Dependencies(BaseModel):
     """The dependencies of the graph."""
-    classifier_agent : Any
-    orchestrator_agent : Any
-    summarizer_agent : Any
-    pointer_agent : Any
+    responder_agent : Any
+    memory_classifier_agent : Any
+    compressor_agent: Any
