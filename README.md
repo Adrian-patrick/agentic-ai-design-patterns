@@ -1,4 +1,4 @@
-# Memory Management Architecture
+# Memory Management
 
 A stateful multi-agent system demonstrating the **Memory Management Pattern** using `pydantic-ai` and `pydantic-graph`.
 
