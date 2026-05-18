@@ -1,60 +1,81 @@
 from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
 from .config import create_model
-from .prompts import planner_agent_system_prompt, worker_agent_system_prompt
-from .models import PlannerOutput
-    
-class PlannerAgent:
+from .prompts import (
+    classifier_system_prompt,
+    orchestrator_system_prompt,
+    summarizer_system_prompt,
+    pointer_system_prompt,
+)
+from .models import ClassifierOutput, OrchestratorInstructions
+
+class ClassifierAgent:
     def __init__(self):
         self.agent = Agent(
             model=create_model(),
-            system_prompt=planner_agent_system_prompt,
-            output_type=PlannerOutput,
+            system_prompt=classifier_system_prompt,
+            output_type=ClassifierOutput,
         )
 
-    async def run(self, query: str, history: list[str]):
-        prompt = f"Original Query: {query}\n\nExecution History:\n" + "\n".join(history)
+    async def run(self, query: str) -> ClassifierOutput:
+        result = await self.agent.run(query)
+        return result.output
+
+class OrchestratorAgent:
+    def __init__(self):
+        self.delegator_agent = Agent(
+            model=create_model(),
+            system_prompt=orchestrator_system_prompt,
+            output_type=OrchestratorInstructions,
+        )
+        self.synthesizer_agent = Agent(
+            model=create_model(),
+            system_prompt=orchestrator_system_prompt,
+            output_type=str,
+        )
+
+    async def delegate(self, query: str, requires_summarizer: bool, requires_pointer: bool) -> OrchestratorInstructions:
+        prompt = (
+            f"Original Query: {query}\n"
+            f"Requires Summarizer: {requires_summarizer}\n"
+            f"Requires Pointer: {requires_pointer}\n\n"
+            "Please generate precise instructions for the required sub-agents."
+        )
+        result = await self.delegator_agent.run(prompt)
+        return result.output
+
+    async def synthesize(self, query: str, summarizer_output: str = None, pointer_output: str = None) -> str:
+        prompt = (
+            f"Original Query: {query}\n"
+            f"Summarizer Output: {summarizer_output or 'N/A'}\n"
+            f"Pointer Output: {pointer_output or 'N/A'}\n\n"
+            "Please compile a final response to the original query."
+        )
+        result = await self.synthesizer_agent.run(prompt)
+        return result.output
+
+class SummarizerAgent:
+    def __init__(self):
+        self.agent = Agent(
+            model=create_model(),
+            system_prompt=summarizer_system_prompt,
+            output_type=str,
+        )
+
+    async def run(self, content: str, instructions: str) -> str:
+        prompt = f"Content to summarize:\n{content}\n\nInstructions from orchestrator:\n{instructions}"
         result = await self.agent.run(prompt)
         return result.output
 
-class WorkerAgent:
+class PointerAgent:
     def __init__(self):
         self.agent = Agent(
             model=create_model(),
-            system_prompt=worker_agent_system_prompt,
+            system_prompt=pointer_system_prompt,
             output_type=str,
         )
-        
-        @self.agent.tool
-        def web_search(ctx: RunContext[str], query: str) -> str:
-            """Search the web using DuckDuckGo."""
-            print(f"   [Worker Tool] Running web search for query: '{query}'")
-            try:
-                from ddgs import DDGS
-                with DDGS() as ddgs_client:
-                    results = [r for r in ddgs_client.text(query, max_results=3)]
-                if not results:
-                    print(f"   [Worker Tool] No search results found.")
-                    return "No results found for this query."
-                print(f"   [Worker Tool] Search completed, found {len(results)} results.")
-                return str(results)
-            except Exception as e:
-                print(f"   [Worker Tool] Search failed: {e}")
-                return f"Search failed: {e}"
-                
-        @self.agent.tool
-        def calculate(ctx: RunContext[str], expression: str) -> str:
-            """Evaluate a mathematical expression."""
-            print(f"   [Worker Tool] Calculating expression: '{expression}'")
-            try:
-                result = str(eval(expression))
-                print(f"   [Worker Tool] Calculation successful: {result}")
-                return result
-            except Exception as e:
-                print(f"   [Worker Tool] Calculation failed: {e}")
-                return f"Calculation failed: {e}"
 
-    async def run(self, step: str):
-        prompt = f"Assigned Step: {step}"
+    async def run(self, content: str, instructions: str) -> str:
+        prompt = f"Content to extract key points from:\n{content}\n\nInstructions from orchestrator:\n{instructions}"
         result = await self.agent.run(prompt)
         return result.output

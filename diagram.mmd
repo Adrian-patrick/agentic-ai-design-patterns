@@ -1,52 +1,54 @@
 graph TD
-    Start[Goal Input] --> Decompose[Decompose into Milestones]
-    Decompose --> Map[Create Dependency Graph]
+    Start[Complex Task] --> Define[Define Specialist Roles]
     
-    Map --> Constraints{Check Constraints}
-    Constraints --> Data[Data Availability]
-    Constraints --> Auth[Authorization Check]
-    Constraints --> Budget[Budget Limits]
-    Constraints --> Time[Deadlines/SLAs]
+    Define --> Roles[Agent Role Assignment]
+    Roles --> A1[Research Agent]
+    Roles --> A2[Analysis Agent]
+    Roles --> A3[Writer Agent]
+    Roles --> A4[Reviewer Agent]
+    Roles --> A5[Coordinator Agent]
     
-    Data --> Plan[Generate Step-by-Step Plan]
-    Auth --> Plan
-    Budget --> Plan
-    Time --> Plan
+    Roles --> Setup[Setup Shared Resources]
+    Setup --> Memory[Shared Memory Store]
+    Setup --> Artifacts[Artifact Repository]
+    Setup --> Version[Version Control]
     
-    Plan --> Assign[Assign Agent/Tool per Step]
-    Assign --> Step1[Execute Step 1]
+    Memory --> Protocol{Coordination Protocol}
+    Artifacts --> Protocol
+    Version --> Protocol
     
-    Step1 --> Check1{Checkpoint}
-    Check1 -->|Success| Step2[Execute Step 2]
-    Check1 -->|Blocked| Analyze[Analyze Blocker]
+    Protocol -->|Orchestrator| Orchestrate[Central Coordinator]
+    Protocol -->|Mesh| Mesh[Peer-to-Peer]
+    Protocol -->|Pipeline| Pipeline[Sequential Handoff]
     
-    Step2 --> Check2{Checkpoint}
-    Check2 -->|Success| Step3[Execute Step 3]
-    Check2 -->|Issue| Analyze
+    Orchestrate --> Coord[Coordinator Manages Flow]
+    Coord --> Task1[Assign to Research Agent]
+    Task1 --> Hand1[Handoff Contract Check]
+    Hand1 --> Task2[Pass to Analysis Agent]
+    Task2 --> Hand2[Handoff Contract Check]
+    Hand2 --> Task3[Send to Writer Agent]
+    Task3 --> Hand3[Handoff Contract Check]
+    Hand3 --> Task4[Review Agent Validation]
     
-    Step3 --> Check3{Checkpoint}
-    Check3 -->|Success| StepN[Execute Step N]
-    Check3 -->|Problem| Analyze
+    Mesh --> Peer[Agents Communicate Directly]
+    Pipeline --> Sequence[Fixed Order Processing]
     
-    Analyze --> NewInfo{New Information?}
-    NewInfo -->|Yes| Replan[Adjust Plan]
-    NewInfo -->|No| Escalate[Escalate Issue]
+    Task4 --> Test{Acceptance Test}
+    Peer --> Test
+    Sequence --> Test
     
-    Replan --> Assign
-    Escalate --> Handle[Handle Exception]
+    Test -->|Pass| Log[Log Conversation Trace]
+    Test -->|Fail| Retry[Retry Collaboration]
     
-    StepN --> Progress[Track Progress]
-    Progress --> Complete{Goals Met?}
+    Retry --> Simulate[Run Simulation]
+    Simulate --> Protocol
     
-    Complete -->|Yes| Accept[Acceptance Criteria Check]
-    Complete -->|No| Analyze
-    
-    Accept --> PostMortem[Generate Post-Mortem]
-    Handle --> PostMortem
-    PostMortem --> End[Close Task]
+    Log --> Decision[Record Decisions]
+    Decision --> Output[Consolidated Output]
+    Output --> End[Deliver Result]
 
     style Start fill:#e1f5fe
-    style Constraints fill:#fff9c4
-    style NewInfo fill:#fff59d
-    style Complete fill:#f3e5f5
+    style Protocol fill:#fff59d
+    style Test fill:#fff9c4
+    style Output fill:#f3e5f5
     style End fill:#c8e6c9

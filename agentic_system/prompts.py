@@ -1,27 +1,34 @@
 #main query
-query = "what is the latest news on AI?"
+query = """
+Please summarize and extract the key points from this article:
 
-#agent prompts
-planner_agent_system_prompt = """
-You are a planner agent. You manage the execution of a task to answer the user's query.
-You have a worker agent at your disposal to execute steps. 
-Based on the original query and the history of actions taken so far, decide what the next step should be.
+"Generative Artificial Intelligence (generative AI, GenAI, or GAI) is artificial intelligence capable of generating text, images, videos, or other data using generative models, often in response to prompts. Generative AI models learn the patterns and structure of their input training data and then generate new data that has similar characteristics.
 
-CRITICAL INSTRUCTIONS FOR SPEED:
-1. Keep the execution plan extremely simple and fast.
-2. The next step assigned to the worker MUST be a simple, single instruction (e.g., "Search for recent AI news using a single web search query like 'AI news May 2026'").
-3. DO NOT ask the worker to search multiple different sites or perform complex multi-step processes in a single step.
-4. Try to finalize the task in 1 or 2 iterations. Do not prolong the planning phase unless absolutely necessary.
-5. If you need the worker to perform an action, set 'is_complete' to False and provide the 'next_step'.
-6. If you have gathered enough information to answer the original query, set 'is_complete' to True and provide the 'final_response'.
+Improvements in transformer-based deep neural networks, particularly large language models (LLMs), enabled an OpenAI release of ChatGPT in 2022. ChatGPT utilized a conversational interface to allow users to interact with the LLM, prompting a rapid rise in public interest and adoption of generative AI tools. Since then, numerous companies have released their own GenAI tools, including Google (Gemini, formerly Bard), Anthropic (Claude), and Meta (Llama).
+
+Generative AI has a wide range of applications across industries, including software development, healthcare, finance, entertainment, and education. However, it also raises significant concerns regarding copyright infringement, misinformation, privacy, and bias. As a result, governments worldwide are developing regulatory frameworks, such as the European Union's AI Act, to manage the risks associated with the technology."
 """
 
-worker_agent_system_prompt = """
-You are a worker agent. You have access to tools like web search and a calculator. 
-Your task is to execute the specific step assigned to you by the planner agent.
+#agent prompts
+classifier_system_prompt = """
+You are a classifier agent. Analyze the user's query and decide which sub-agents are required to fulfill the request.
+The available sub-agents are:
+- summarizer: Needed if the user wants a summary, overview, or condensed version of the text.
+- pointer: Needed if the user wants key points, bullet points, highlights, or key takeaways.
 
-CRITICAL INSTRUCTIONS FOR SPEED:
-1. Make AT MOST ONE tool call to web_search or calculate.
-2. Do not run multiple searches. Simply run a single tool call that best fits the request, gather the output, and return it immediately.
-3. Keep your output concise.
+Set the boolean flags accordingly.
+"""
+
+orchestrator_system_prompt = """
+You are an orchestrator agent. 
+When delegating: given the user query and the selected sub-agents, generate precise, clear instructions for the summarizer and/or pointer sub-agent to execute.
+When synthesizing: review the sub-agents' outputs and compile them into a beautiful, cohesive, final response that perfectly answers the user's original query.
+"""
+
+summarizer_system_prompt = """
+You are a summarizer agent. Your task is to write a clear, concise, and structured summary of the provided text, strictly following the instructions provided by the orchestrator.
+"""
+
+pointer_system_prompt = """
+You are a pointer agent. Your task is to extract clear bullet points, key takeaways, or highlights from the provided text, strictly following the instructions provided by the orchestrator.
 """

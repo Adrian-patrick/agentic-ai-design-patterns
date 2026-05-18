@@ -1,18 +1,29 @@
 from typing import Any, Optional, List
 from pydantic import BaseModel
 
-class PlannerOutput(BaseModel):
-    is_complete: bool
-    next_step: Optional[str] = None
-    final_response: Optional[str] = None
+class ClassifierOutput(BaseModel):
+    requires_summarizer: bool
+    requires_pointer: bool
+
+class OrchestratorInstructions(BaseModel):
+    summarizer_instruction: Optional[str] = None
+    pointer_instruction: Optional[str] = None
 
 class State(BaseModel):
     """The state of the agent."""
     query : str
-    iteration: int = 0
-    history: List[str] = []
+    content: str = ""
+    requires_summarizer: bool = False
+    requires_pointer: bool = False
+    summarizer_instruction: Optional[str] = None
+    pointer_instruction: Optional[str] = None
+    summarizer_output: Optional[str] = None
+    pointer_output: Optional[str] = None
+    final_response: Optional[str] = None
     
 class Dependencies(BaseModel):
     """The dependencies of the graph."""
-    planner_agent : Any
-    worker_agent : Any
+    classifier_agent : Any
+    orchestrator_agent : Any
+    summarizer_agent : Any
+    pointer_agent : Any
