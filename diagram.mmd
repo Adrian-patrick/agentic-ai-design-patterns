@@ -1,62 +1,59 @@
 graph TD
-    Start[User Interaction] --> Capture[Capture Information]
+    Start[System Operation] --> Collect[Collect Feedback Signals]
     
-    Capture --> Classify{Classify Memory Type}
+    Collect --> Sources{Feedback Sources}
+    Sources --> User[User Corrections]
+    Sources --> Ratings[Quality Ratings]
+    Sources --> Evals[Automated Evaluations]
+    Sources --> Outcomes[Task Outcomes]
     
-    Classify -->|Immediate| ShortTerm[Short-Term Memory]
-    Classify -->|Experience| Episodic[Episodic Memory]
-    Classify -->|Knowledge| LongTerm[Long-Term Memory]
+    User --> Aggregate[Aggregate Signals]
+    Ratings --> Aggregate
+    Evals --> Aggregate
+    Outcomes --> Aggregate
     
-    ShortTerm --> Buffer[Conversation Buffer]
-    Episodic --> Events[Event Store]
-    LongTerm --> Knowledge[Knowledge Base]
+    Aggregate --> Clean{Data Quality Check}
+    Clean -->|Noisy| Filter[Filter Noise]
+    Clean -->|Adversarial| Reject[Reject Malicious]
+    Clean -->|Clean| Process[Process Feedback]
     
-    Buffer --> Compress{Context Window Full?}
-    Compress -->|Yes| Summarize[Summarize & Compress]
-    Compress -->|No| Keep[Keep in Buffer]
+    Filter --> Validate[Validate Patterns]
+    Reject --> Log[Log Security Event]
+    Process --> Validate
     
-    Summarize --> Store[Store Summary]
-    Keep --> Current[Current Context]
+    Validate --> Learn{Learning Method}
     
-    Events --> Index[Index Memories]
-    Knowledge --> Index
-    Store --> Index
+    Learn -->|Prompts| UpdatePrompts[Update Prompt Templates]
+    Learn -->|Policies| UpdatePolicies[Adjust Decision Policies]
+    Learn -->|Examples| AddExamples[Add to Few-Shot Examples]
+    Learn -->|Preferences| UpdatePrefs[Update Preference Rules]
+    Learn -->|FineTune| PrepareData[Prepare Training Data]
     
-    Index --> Metadata[Add Metadata]
-    Metadata --> Recency[Recency Score]
-    Metadata --> Frequency[Access Frequency]
-    Metadata --> Topic[Topic Tags]
+    UpdatePrompts --> Test[A/B Testing]
+    UpdatePolicies --> Test
+    AddExamples --> Test
+    UpdatePrefs --> Test
     
-    Current --> Retrieve{Retrieve Relevant?}
-    Retrieve -->|Yes| Query[Query Memory Store]
-    Retrieve -->|No| Process[Process Request]
+    PrepareData --> Curate[Curate Dataset]
+    Curate --> Train[Fine-tune Adapters]
+    Train --> Test
     
-    Query --> Filter[Apply Filters]
-    Filter --> Role[By Role/Task]
-    Filter --> Time[By Time Range]
-    Filter --> Relevance[By Topic Match]
+    Test --> Monitor{Monitor Performance}
     
-    Role --> Select[Select Memories]
-    Time --> Select
-    Relevance --> Select
+    Monitor -->|Improvement| Deploy[Deploy Changes]
+    Monitor -->|Regression| Rollback[Rollback Changes]
+    Monitor -->|Neutral| Iterate[Continue Learning]
     
-    Select --> TTL{Check TTL}
-    TTL -->|Expired| Forget[Remove/Archive]
-    TTL -->|Valid| Load[Load to Context]
+    Deploy --> Track[Track Metrics]
+    Rollback --> Analyze[Analyze Failure]
+    Iterate --> Collect
     
-    Forget --> Audit[Audit Trail]
-    Load --> Process
-    
-    Process --> Privacy{Privacy Check}
-    Privacy -->|Sensitive| Redact[Redact Data]
-    Privacy -->|Safe| Write[Write to Memory]
-    
-    Redact --> Write
-    Write --> Update[Update Memories]
-    Update --> End[Continue Interaction]
+    Track --> Report[Generate Learning Report]
+    Analyze --> Report
+    Report --> End[System Improved]
 
     style Start fill:#e1f5fe
-    style Classify fill:#fff59d
-    style Compress fill:#fff9c4
-    style Privacy fill:#ffccbc
+    style Clean fill:#fff9c4
+    style Learn fill:#fff59d
+    style Monitor fill:#f3e5f5
     style End fill:#c8e6c9

@@ -1,28 +1,54 @@
 from typing import Any, Optional, List
 from pydantic import BaseModel
 
-class MemoryItem(BaseModel):
-    content: str
-    category: str  # 'Short-Term', 'Episodic', 'Long-Term'
-    tags: List[str] = []
+class FeedbackSignal(BaseModel):
+    user_correction: Optional[str] = None
+    quality_rating: int  # 1 to 5
+    automated_eval_score: float  # 0.0 to 1.0
+    task_outcome: str  # 'success' or 'failure'
 
-class MemoryClassifierOutput(BaseModel):
-    has_new_memories: bool
-    memories: List[MemoryItem] = []
+class FewShotExample(BaseModel):
+    query: str
+    preferred_response: str
+
+class ValidationResult(BaseModel):
+    is_adversarial: bool
+    is_noisy: bool
+    clean_feedback: Optional[str] = None
+
+class AdaptationAction(BaseModel):
+    action_type: str  # 'UpdatePrompts', 'AddExamples', 'UpdatePrefs'
+    value: str  # The prompt update, preferred example, or new preference rule
+
+class LearningReport(BaseModel):
+    turns_operated: int
+    improvements_deployed: List[str]
+    failures_analyzed: List[str]
+    system_status: str
 
 class State(BaseModel):
-    """The state of the agent."""
-    query : str
+    """The state of the learning & adaptation agent."""
+    query: str
     response: Optional[str] = None
-    loaded_memories: List[str] = []
     
-    # Memory stores (normally in a database, here in state)
-    short_term_buffer: List[str] = []  # Conversation buffer
-    episodic_memory: List[MemoryItem] = []  # Experience event store
-    long_term_memory: List[MemoryItem] = []  # Knowledge base
+    # Feedback signals collected
+    feedback: Optional[FeedbackSignal] = None
+    
+    # System settings (adapted dynamically)
+    prompt_template: str = "Be a helpful assistant."
+    few_shot_examples: List[FewShotExample] = []
+    preference_rules: List[str] = []
+    
+    # Adaptation pipeline state
+    is_malicious: bool = False
+    validation_passed: bool = False
+    adaptation_applied: Optional[str] = None
+    monitor_status: str = "neutral"  # 'improvement', 'regression', 'neutral'
+    learning_report: Optional[LearningReport] = None
 
 class Dependencies(BaseModel):
     """The dependencies of the graph."""
-    responder_agent : Any
-    memory_classifier_agent : Any
-    compressor_agent: Any
+    task_agent: Any
+    feedback_validator_agent: Any
+    learner_agent: Any
+    evaluator_agent: Any

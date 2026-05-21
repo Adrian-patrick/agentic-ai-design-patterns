@@ -1,102 +1,89 @@
-# Memory Management
+# Learning & Adaptation
 
-A stateful multi-agent system demonstrating the **Memory Management Pattern** using `pydantic-ai` and `pydantic-graph`.
+A small demonstrator implementing an adaptive multi-agent learning pipeline. The system
+simulates multi-turn interactions, collects feedback signals, validates them, and—when
+necessary—applies lightweight learning steps (prompt updates, examples, or preference rules)
+followed by A/B-style evaluation.
 
-## Project Overview
+This repository is intended as a reference / teaching artifact rather than a production
+system. It shows patterns for orchestration, validation, adaptation, and reporting using
+`pydantic-ai` and `pydantic-graph`.
 
-This project implements a multi-tiered memory orchestration system that allows an agent to maintain conversational continuity, recall user preferences, perform privacy redactions, and compress short-term memory dynamically when context thresholds are reached.
+## Quick summary
+- Purpose: Demonstrate a multi-turn learning loop that adapts system prompts and examples
+   based on feedback.
+- Entry point: `main.py` — runs a short scripted transcript (see `agentic_system/prompts.py`).
+- LLM integrations: configured for Azure OpenAI via `agentic_system/config.py`.
 
-### Architectural Workflow
+## Requirements
+- Python 3.11+ (3.13+ is recommended in the original notes).
+- An Azure OpenAI deployment and credentials (see `agentic_system/config.py`).
 
-```mermaid
-graph TD
-    Start[User Interaction] --> Capture[Capture Information]
-    Capture --> Classify{Classify Memory Type}
-    
-    Classify -->|Immediate| ShortTerm[Short-Term Memory]
-    Classify -->|Experience| Episodic[Episodic Memory]
-    Classify -->|Knowledge| LongTerm[Long-Term Memory]
-    
-    ShortTerm --> Buffer[Conversation Buffer]
-    Episodic --> Events[Event Store]
-    LongTerm --> Knowledge[Knowledge Base]
-    
-    Buffer --> Compress{Context Window Full?}
-    Compress -->|Yes| Summarize[Summarize & Compress]
-    Compress -->|No| Keep[Keep in Buffer]
-    
-    Summarize --> Store[Store Summary]
-    Keep --> Current[Current Context]
-    
-    Events --> Index[Index Memories]
-    Knowledge --> Index
-    Store --> Index
-    
-    Index --> Metadata[Add Metadata]
-    Metadata --> Recency[Recency Score]
-    Metadata --> Frequency[Access Frequency]
-    Metadata --> Topic[Topic Tags]
-    
-    Current --> Retrieve{Retrieve Relevant?}
-    Retrieve -->|Yes| Query[Query Memory Store]
-    Retrieve -->|No| Process[Process Request]
-    
-    Query --> Filter[Apply Filters]
-    Filter --> Role[By Role/Task]
-    Filter --> Time[By Time Range]
-    Filter --> Relevance[By Topic Match]
-    
-    Role --> Select[Select Memories]
-    Time --> Select
-    Relevance --> Select
-    
-    Select --> TTL{Check TTL}
-    TTL -->|Expired| Forget[Remove/Archive]
-    TTL -->|Valid| Load[Load to Context]
-    
-    Forget --> Audit[Audit Trail]
-    Load --> Process
-    
-    Process --> Privacy{Privacy Check}
-    Privacy -->|Sensitive| Redact[Redact Data]
-    Privacy -->|Safe| Write[Write to Memory]
-    
-    Redact --> Write
-    Write --> Update[Update Memories]
-    Update --> End[Continue Interaction]
+## Setup
+
+1. Create and activate a virtual environment:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 ```
 
-### Graph Execution Nodes
-1. **RetrieveNode (Retrieve Relevant)**: Queries the episodic and long-term memory stores to pull relevant background knowledge and events into the active context.
-2. **ProcessNode (Process Request)**: Formulates the personalized assistant response using the query, active conversation buffer, and retrieved memories.
-3. **MemoryClassificationNode (Classify & Privacy Check)**: 
-   - Uses `MemoryClassifierAgent` to parse the turn.
-   - Extracts and categorizes facts into `Short-Term` (Immediate), `Episodic` (Experiences), and `Long-Term` (Knowledge) stores.
-   - **Privacy Check**: Ensures sensitive personal information (PII) is either omitted or redacted before storage.
-   - If the active conversation buffer reaches its threshold (>= 2 turns), it routes to `CompressNode`.
-4. **CompressNode (Context Window Summarization)**:
-   - Uses `CompressorAgent` to summarize the detailed short-term buffer turns.
-   - Archives the concise summary into the `Long-Term` store and clears the immediate buffer to maintain optimal context window utilization.
+2. Install project dependencies (uses `pyproject.toml`):
 
-## Technology Stack
-- **Framework**: [pydantic-ai](https://ai.pydantic.dev/) & [pydantic-graph](https://ai.pydantic.dev/graph/)
-- **LLM Provider**: Azure OpenAI
-- **Environment**: Python 3.13+, Managed via `uv`
+```powershell
+pip install -e .
+```
 
-## Project Structure
-- `main.py`: Runs a multi-turn showcase highlighting turn-by-turn memory retrieval, storage, privacy check, and active buffer compression.
-- `agentic_system/`:
-    - `graph.py`: Houses the graph orchestration nodes (`RetrieveNode`, `ProcessNode`, `MemoryClassificationNode`, `CompressNode`).
-    - `agents.py`: Implementations for the `ResponderAgent`, `MemoryClassifierAgent`, and `CompressorAgent`.
-    - `models.py`: Shared memory structures (`MemoryItem`, `MemoryClassifierOutput`, `State`, and `Dependencies`).
-    - `prompts.py`: Roles and system instructions guiding responder persona, memory categorization, privacy rules, and summaries.
-    - `config.py`: Azure OpenAI provider configuration.
+3. Add your Azure OpenAI credentials to a `.env` file at the repository root. The
+    following environment variables are expected by `agentic_system/config.py`:
 
-## Getting Started
+- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_API_VERSION`
+- `AZURE_OPENAI_CHAT_DEPLOYMENT_NAME`
 
-1. Configure your `.env` file with Azure OpenAI credentials.
-2. Ensure you have dependencies installed (managed automatically via `uv run`).
-3. Run the multi-turn memory showcase:
-   ```bash
-   uv run main.py
-   ```
+Example `.env` (DO NOT commit credentials):
+
+```
+AZURE_OPENAI_ENDPOINT=https://your-azure-endpoint.openai.azure.com/
+AZURE_OPENAI_API_KEY=sk-...
+AZURE_OPENAI_API_VERSION=2023-10-01-preview
+AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=gpt-4o
+```
+
+## Run the showcase
+
+Run the scripted multi-turn demonstration:
+
+```powershell
+python main.py
+# or (if you have the `uv` runner mentioned in the original notes):
+uv run main.py
+```
+
+The script will iterate through the examples defined in `agentic_system/prompts.py`, run
+the orchestration graph in `agentic_system/graph.py`, and print the response and a short
+learning report for each turn.
+
+## Project structure
+- `main.py` — script that drives the showcase.
+- `agentic_system/`
+   - `graph.py` — the orchestrator graph and node implementations.
+   - `agents.py` — wrapper agents that call the configured LLM model.
+   - `models.py` — Pydantic models for state, feedback, and adaptation artifacts.
+   - `prompts.py` — scripted turns and system prompt templates used in the demo.
+   - `config.py` — Azure OpenAI configuration helper (reads from environment).
+- `test_transcript.py` — an example transcript used for testing/notes.
+
+## Notes & next steps
+- The demo expects valid Azure OpenAI credentials. If you don't have them, you can
+   stub `create_model()` in `agentic_system/config.py` to use a local or mock model for
+   offline testing.
+- The repository is intended as a learning artifact: it focuses on architecture and
+   patterns (validation, adaptation loop, A/B evaluation), not production concerns
+   (robust error handling, secrets management, or observability plumbing).
+
+If you'd like, I can also:
+- add a `requirements.txt` or `README` section showing how to run the project with mocked
+   agents for offline development, or
+- run the demo (if you allow me to run tests/commands in this environment).
