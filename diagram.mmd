@@ -1,59 +1,72 @@
 graph TD
-    Start[System Operation] --> Collect[Collect Feedback Signals]
+    Start[What Do We Want to Achieve?] --> Create[Create Clear Goals]
     
-    Collect --> Sources{Feedback Sources}
-    Sources --> User[User Corrections]
-    Sources --> Ratings[Quality Ratings]
-    Sources --> Evals[Automated Evaluations]
-    Sources --> Outcomes[Task Outcomes]
+    Create --> Specific[Make It Specific]
+    Create --> Measurable[Make It Measurable]
+    Create --> Achievable[Make It Achievable]
+    Create --> Relevant[Make It Matter]
+    Create --> TimeBound[Set a Deadline]
     
-    User --> Aggregate[Aggregate Signals]
-    Ratings --> Aggregate
-    Evals --> Aggregate
-    Outcomes --> Aggregate
+    Specific --> Rules[Set the Rules]
+    Measurable --> Rules
+    Achievable --> Rules
+    Relevant --> Rules
+    TimeBound --> Rules
     
-    Aggregate --> Clean{Data Quality Check}
-    Clean -->|Noisy| Filter[Filter Noise]
-    Clean -->|Adversarial| Reject[Reject Malicious]
-    Clean -->|Clean| Process[Process Feedback]
+    Rules --> Budget[How Much Can We Spend?]
+    Rules --> Resources[What Resources Do We Have?]
+    Rules --> Deadline[When Must It Be Done?]
     
-    Filter --> Validate[Validate Patterns]
-    Reject --> Log[Log Security Event]
-    Process --> Validate
+    Budget --> Targets[Set Success Targets]
+    Resources --> Targets
+    Deadline --> Targets
     
-    Validate --> Learn{Learning Method}
+    Targets --> Quality[Set Quality Standards]
+    Quality --> Start_Work[Start Working]
     
-    Learn -->|Prompts| UpdatePrompts[Update Prompt Templates]
-    Learn -->|Policies| UpdatePolicies[Adjust Decision Policies]
-    Learn -->|Examples| AddExamples[Add to Few-Shot Examples]
-    Learn -->|Preferences| UpdatePrefs[Update Preference Rules]
-    Learn -->|FineTune| PrepareData[Prepare Training Data]
+    Start_Work --> Watch{Watch Progress}
     
-    UpdatePrompts --> Test[A/B Testing]
-    UpdatePolicies --> Test
-    AddExamples --> Test
-    UpdatePrefs --> Test
+    Watch --> Status[Check Current Status]
+    Watch --> Save[Save Progress Points]
+    Watch --> Track[Track How We're Doing]
     
-    PrepareData --> Curate[Curate Dataset]
-    Curate --> Train[Fine-tune Adapters]
-    Train --> Test
+    Status --> Numbers[Collect the Numbers]
+    Save --> Numbers
+    Track --> Numbers
     
-    Test --> Monitor{Monitor Performance}
+    Numbers --> Compare{Are We On Track?}
     
-    Monitor -->|Improvement| Deploy[Deploy Changes]
-    Monitor -->|Regression| Rollback[Rollback Changes]
-    Monitor -->|Neutral| Iterate[Continue Learning]
+    Compare -->|Yes| Continue[Keep Going]
+    Compare -->|Getting Off Track| Alert[Sound the Alarm]
+    Compare -->|Blocked| Escalate[Get Help]
     
-    Deploy --> Track[Track Metrics]
-    Rollback --> Analyze[Analyze Failure]
-    Iterate --> Collect
+    Alert --> Why[Find Out Why]
+    Escalate --> Why
     
-    Track --> Report[Generate Learning Report]
-    Analyze --> Report
-    Report --> End[System Improved]
+    Why --> Fix{How to Fix It?}
+    
+    Fix --> Adjust[Change the Plan]
+    Fix --> More_Resources[Get More Resources]
+    Fix --> Change_Goal[Change the Goal]
+    
+    Adjust --> Start_Work
+    More_Resources --> Start_Work
+    Change_Goal --> Start_Work
+    
+    Continue --> Done{Goal Achieved?}
+    
+    Done -->|Yes| Success[We Did It!]
+    Done -->|No| Check_Budget{Still Have Budget?}
+    
+    Check_Budget -->|Yes| Watch
+    Check_Budget -->|No| Decision[Stop or Get More?]
+    
+    Success --> Report[Create Final Report]
+    Decision --> Report
+    Report --> End[Project Complete]
 
     style Start fill:#e1f5fe
-    style Clean fill:#fff9c4
-    style Learn fill:#fff59d
-    style Monitor fill:#f3e5f5
+    style Create fill:#fff59d
+    style Watch fill:#fff9c4
+    style Done fill:#f3e5f5
     style End fill:#c8e6c9

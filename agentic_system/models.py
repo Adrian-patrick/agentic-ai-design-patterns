@@ -1,54 +1,58 @@
-from typing import Any, Optional, List
-from pydantic import BaseModel
+from typing import Any, Optional, List, Dict
+from pydantic import BaseModel, Field
 
-class FeedbackSignal(BaseModel):
-    user_correction: Optional[str] = None
-    quality_rating: int  # 1 to 5
-    automated_eval_score: float  # 0.0 to 1.0
-    task_outcome: str  # 'success' or 'failure'
+class GoalSpec(BaseModel):
+    """Specific, Measurable, Achievable, Relevant, Timebound objectives & rules."""
+    specific: str = Field(description="Clear statement of the goal and objectives.")
+    measurable: str = Field(description="The concrete, measurable success criteria.")
+    achievable: str = Field(description="Feasibility and resources check description.")
+    relevant: str = Field(description="Business value and alignment reasoning.")
+    deadline_turns: int = Field(description="Maximum execution turns limit (e.g. 3).")
+    budget_limit: int = Field(description="Maximum credit budget limit (e.g. 150).")
+    quality_standard: str = Field(description="Quality constraints and SLAs (e.g. database_latency_ms < 50ms, data accuracy >= 99%).")
 
-class FewShotExample(BaseModel):
-    query: str
-    preferred_response: str
+class TelemetryMetrics(BaseModel):
+    """Telemetry metrics collected from system monitors."""
+    database_latency_ms: float = Field(description="Simulated or measured database read latency in milliseconds.")
+    inventory_accuracy_pct: float = Field(description="Calculated database inventory accuracy vs ground truth source as a percentage.")
 
-class ValidationResult(BaseModel):
-    is_adversarial: bool
-    is_noisy: bool
-    clean_feedback: Optional[str] = None
+    def get(self, key: str, default: Any = None) -> Any:
+        return getattr(self, key, default)
 
-class AdaptationAction(BaseModel):
-    action_type: str  # 'UpdatePrompts', 'AddExamples', 'UpdatePrefs'
-    value: str  # The prompt update, preferred example, or new preference rule
+    def items(self):
+        return self.model_dump().items()
 
-class LearningReport(BaseModel):
-    turns_operated: int
-    improvements_deployed: List[str]
-    failures_analyzed: List[str]
-    system_status: str
+class ProgressSnapshot(BaseModel):
+    """Telemetry/metrics collected during work execution."""
+    metrics_collected: TelemetryMetrics = Field(description="Key metrics parsed from telemetry. Must contain database_latency_ms and inventory_accuracy_pct.")
+    budget_spent_this_turn: int = Field(description="Credits/cost spent during this turn.")
+    current_status: str = Field(description="Current status assessment. Must be one of: 'on_track', 'off_track', or 'blocked'.")
+    explanation: str = Field(description="Detailed reasoning for the status assessment.")
+
+class FixAction(BaseModel):
+    """Adaptation action proposed by the adapter agent."""
+    fix_type: str = Field(description="Type of adaptation: 'ChangePlan', 'GetMoreResources', or 'ChangeGoal'.")
+    value: str = Field(description="Detailed explanation/value of the fix action.")
 
 class State(BaseModel):
-    """The state of the learning & adaptation agent."""
+    """State for the Goal Setting & Monitoring orchestrator."""
     query: str
-    response: Optional[str] = None
+    goal_spec: Optional[GoalSpec] = None
+    current_plan: str = "None"
+    last_worker_output: str = ""
+    step_count: int = 0
+    budget_spent: int = 0
+    status_history: List[ProgressSnapshot] = []
     
-    # Feedback signals collected
-    feedback: Optional[FeedbackSignal] = None
-    
-    # System settings (adapted dynamically)
-    prompt_template: str = "Be a helpful assistant."
-    few_shot_examples: List[FewShotExample] = []
-    preference_rules: List[str] = []
-    
-    # Adaptation pipeline state
-    is_malicious: bool = False
-    validation_passed: bool = False
-    adaptation_applied: Optional[str] = None
-    monitor_status: str = "neutral"  # 'improvement', 'regression', 'neutral'
-    learning_report: Optional[LearningReport] = None
+    # Execution states
+    is_achieved: bool = False
+    is_blocked: bool = False
+    fix_action: Optional[FixAction] = None
+    final_report: Optional[str] = None
 
 class Dependencies(BaseModel):
-    """The dependencies of the graph."""
-    task_agent: Any
-    feedback_validator_agent: Any
-    learner_agent: Any
-    evaluator_agent: Any
+    """Injectable agent dependencies."""
+    goal_creator_agent: Any
+    worker_agent: Any
+    monitor_agent: Any
+    adapter_agent: Any

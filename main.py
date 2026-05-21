@@ -1,51 +1,39 @@
 import asyncio
 import sys
-from agentic_system.prompts import turns
 from agentic_system.graph import run_graph, State
-from agentic_system.models import FeedbackSignal
 
 if sys.platform.startswith('win'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 async def main():
-    """Main entry point to run the multi-turn learning and adaptation system showcase."""
+    """Main entry point to run the Goal Setting & Monitoring showcases."""
     print("==================================================")
-    print("STARTING SYSTEM SHOWCASE: LEARNING & ADAPTATION")
+    print("STARTING SYSTEM SHOWCASE: GOAL SETTING & MONITORING")
     print("==================================================")
     
-    # Initialize a persistent state for system configuration
-    state = State(query="")
+    # Define a complex goal setting query with rules and targets
+    query = (
+        "Configure and verify a supply chain inventory levels tracking service. "
+        "Must have database read latency < 50ms and data accuracy >= 99.0% "
+        "operating within a maximum limit of 3 turns and a budget of 150 credits."
+    )
     
-    for i, turn in enumerate(turns, 1):
-        print(f"\n\n>>>>>>>> TURN {i} <<<<<<<<")
-        q = turn["query"]
-        fb_dict = turn["feedback"]
+    # Initialize state
+    state = State(query=query)
+    
+    try:
+        # Run graph (handles full state machine, loops, monitor assessments, and adaptation nodes)
+        report, state = await run_graph(query, state=state)
         
-        fb = FeedbackSignal(
-            user_correction=fb_dict["user_correction"],
-            quality_rating=fb_dict["quality_rating"],
-            automated_eval_score=fb_dict["automated_eval_score"],
-            task_outcome=fb_dict["task_outcome"]
-        )
-        
-        try:
-            # Run graph, which updates the state (prompt templates, rules, and few-shots)
-            response, state = await run_graph(q, feedback=fb, state=state)
+        print("\n\n>>>>>>>> SHOWCASE COMPLETED SUCCESSFULLY <<<<<<<<")
+        print(f"Final State Success Flag: {state.is_achieved}")
+        print(f"Total Steps Taken: {state.step_count}")
+        print(f"Total Budget Consumed: {state.budget_spent} credits")
+        if state.fix_action:
+            print(f"Adaptations Triggered: {state.fix_action.fix_type} -> '{state.fix_action.value}'")
             
-            # Print current state database contents
-            print("\n[Current Persistent Configuration Snapshot]")
-            print(f"  - Core Prompt: '{state.prompt_template}'")
-            print(f"  - Few-Shot Examples Count: {len(state.few_shot_examples)}")
-            print(f"  - Preference Rules: {state.preference_rules}")
-            if state.learning_report:
-                report = state.learning_report
-                print(f"  - Deployed Optimizations: {report.improvements_deployed}")
-                print(f"  - Tracked/Blocked Incidents: {report.failures_analyzed}")
-                print(f"  - Learning Report System Status: {report.system_status}")
-                
-        except Exception as e:
-            print(f"An error occurred during turn {i}: {e}")
-            break
+    except Exception as e:
+        print(f"An error occurred during graph execution: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())
