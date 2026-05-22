@@ -1,88 +1,82 @@
-# Goal Setting and Monitoring Pattern
+# Exception Handling and Recovery Pattern
 
 ## When to Use
 
-- **Autonomous operations**: When agents work independently toward objectives
-- **Complex projects**: Multi-step tasks requiring progress tracking
-- **Resource management**: When operating within constraints
-- **Performance optimization**: Achieving specific measurable outcomes
-- **Compliance requirements**: Meeting SLAs and quality standards
-- **Strategic execution**: Aligning agent actions with business goals
+- **Production environments**: Any system requiring high reliability
+- **External dependencies**: When relying on APIs or services
+- **Critical operations**: Tasks that must not fail completely
+- **Unpredictable inputs**: Handling edge cases and anomalies
+- **Network operations**: Managing connectivity issues
+- **Resource constraints**: Dealing with limits and quotas
 
 ## Where It Fits
 
-- **Project automation**: Managing project milestones and deliverables
-- **Sales pipelines**: Tracking targets and conversion goals
-- **Content production**: Meeting publishing schedules and quality standards
-- **System optimization**: Achieving performance benchmarks
-- **Cost management**: Operating within budget constraints
+- **API integrations**: Handling service outages and rate limits
+- **Data pipelines**: Managing corrupt data and processing failures
+- **User-facing systems**: Maintaining service availability
+- **Financial transactions**: Ensuring transaction integrity
+- **IoT systems**: Handling device failures and connectivity issues
 
 ## Pros
 
-- **Purpose-driven**: Agents work toward clear objectives
-- **Self-assessment**: Continuous evaluation of progress
-- **Adaptability**: Dynamic adjustment to changing conditions
-- **Accountability**: Clear metrics and success criteria
-- **Resource efficiency**: Optimal allocation based on priorities
-- **Early warning**: Proactive detection of issues
-- **Measurable outcomes**: Quantifiable success metrics
+- **Reliability**: System continues operating despite failures
+- **Graceful degradation**: Provides partial functionality when full service unavailable
+- **Self-healing**: Automatic recovery from transient issues
+- **User experience**: Minimizes disruption to users
+- **Debugging support**: Comprehensive error logging
+- **Learning capability**: Improves handling over time
+- **State preservation**: Can resume after interruptions
 
 ## Cons
 
-- **Overhead complexity**: Goal management adds system complexity
-- **Rigid constraints**: May limit creative problem-solving
-- **Measurement challenges**: Some goals are hard to quantify
-- **False metrics**: Risk of optimizing wrong indicators
-- **Resource intensive**: Continuous monitoring requires resources
-- **Goal conflicts**: Multiple goals may compete
-- **Over-optimization**: May sacrifice quality for metrics
+- **Complexity increase**: Error handling adds code complexity
+- **Performance overhead**: Try/catch and retries add latency
+- **False positives**: May retry when unnecessary
+- **Resource consumption**: Retries and fallbacks use resources
+- **Cascading failures**: Poor handling can worsen problems
+- **Testing difficulty**: Hard to test all failure scenarios
+- **Maintenance burden**: Error handling code needs updates
 
 ## Real-World Examples
 
-1. **Sales Automation System**:
-   - Monthly revenue targets with daily tracking
-   - Lead conversion rate goals
-   - Customer acquisition cost limits
-   - Activity metrics (calls, emails, meetings)
-   - Automatic escalation for at-risk deals
-   - Performance dashboard generation
+1. **Payment Processing System**:
+   - Retry failed transactions with backoff
+   - Fallback to alternative payment gateways
+   - Save transaction state for manual review
+   - Notify finance team of critical failures
+   - Automatic refund on persistent failures
 
-2. **Content Publishing Platform**:
-   - Article publication schedules
-   - Quality score thresholds
-   - SEO performance targets
-   - Engagement metrics goals
-   - Budget allocation per content type
-   - Deadline management with alerts
+2. **Data Integration Pipeline**:
+   - Handle malformed data gracefully
+   - Retry failed API calls with jitter
+   - Use cached data when services unavailable
+   - Checkpoint progress for resume capability
+   - Alert on data quality issues
 
-3. **DevOps Pipeline**:
-   - Deployment frequency targets
-   - Mean time to recovery (MTTR) goals
-   - Test coverage requirements
-   - Performance benchmarks
-   - Cost per deployment limits
-   - Automatic rollback on metric violations
+3. **Chatbot Customer Service**:
+   - Fallback to simpler responses on errors
+   - Escalate to human agents when stuck
+   - Save conversation state for handoff
+   - Retry knowledge base queries
+   - Default to FAQ responses
 
-4. **Customer Service Center**:
-   - First response time SLAs
-   - Resolution rate targets
-   - Customer satisfaction scores
-   - Ticket volume management
-   - Cost per interaction limits
-   - Escalation thresholds
+4. **Content Delivery Network**:
+   - Retry failed origin fetches
+   - Serve stale content when origin down
+   - Route to backup servers
+   - Implement circuit breakers
+   - Geographic failover strategies
 
-5. **Marketing Campaign Manager**:
-   - ROI targets per campaign
-   - Conversion rate goals
-   - Budget allocation limits
-   - A/B test success criteria
-   - Channel performance metrics
-   - Real-time optimization triggers
+5. **Machine Learning Pipeline**:
+   - Handle model loading failures
+   - Fallback to simpler models
+   - Retry failed predictions
+   - Cache frequent predictions
+   - Graceful degradation of features
 
-6. **Supply Chain Optimization**:
-   - Inventory level targets
-   - Order fulfillment SLAs
-   - Cost reduction goals
-   - Delivery time objectives
-   - Quality compliance rates
-   - Automatic reorder triggers
+6. **IoT Device Management**:
+   - Retry failed device commands
+   - Queue commands for offline devices
+   - Use last known state as fallback
+   - Implement watchdog timers
+   - Automatic device reboot protocols

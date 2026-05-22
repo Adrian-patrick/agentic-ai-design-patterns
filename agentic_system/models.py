@@ -1,58 +1,70 @@
 from typing import Any, Optional, List, Dict
+from enum import Enum
 from pydantic import BaseModel, Field
 
-class GoalSpec(BaseModel):
-    """Specific, Measurable, Achievable, Relevant, Timebound objectives & rules."""
-    specific: str = Field(description="Clear statement of the goal and objectives.")
-    measurable: str = Field(description="The concrete, measurable success criteria.")
-    achievable: str = Field(description="Feasibility and resources check description.")
-    relevant: str = Field(description="Business value and alignment reasoning.")
-    deadline_turns: int = Field(description="Maximum execution turns limit (e.g. 3).")
-    budget_limit: int = Field(description="Maximum credit budget limit (e.g. 150).")
-    quality_standard: str = Field(description="Quality constraints and SLAs (e.g. database_latency_ms < 50ms, data accuracy >= 99%).")
+class ExceptionCategory(str, Enum):
+    TEMPORARY = "Temporary"
+    PERMANENT = "Permanent"
+    CRITICAL = "Critical"
 
-class TelemetryMetrics(BaseModel):
-    """Telemetry metrics collected from system monitors."""
-    database_latency_ms: float = Field(description="Simulated or measured database read latency in milliseconds.")
-    inventory_accuracy_pct: float = Field(description="Calculated database inventory accuracy vs ground truth source as a percentage.")
+class BackupOption(str, Enum):
+    SIMPLE_METHOD = "Simple Method"
+    SAVED_DATA = "Saved Data"
+    DEFAULT_ANSWER = "Default Answer"
+    HUMAN_HELP = "Get Human Help"
 
-    def get(self, key: str, default: Any = None) -> Any:
-        return getattr(self, key, default)
+class ErrorTriageResult(BaseModel):
+    """Result of classifying and triaging an exception."""
+    category: ExceptionCategory = Field(description="The classified type of the error (Temporary, Permanent, Critical).")
+    severity: str = Field(description="Severity of the error (e.g., 'Low', 'Medium', 'High').")
+    reasoning: str = Field(description="Detailed reasoning for the classification.")
+    recommended_action: str = Field(description="Recommended recovery or handling strategy.")
 
-    def items(self):
-        return self.model_dump().items()
+class SafetyVerdict(BaseModel):
+    """Verdict of the safety review after a critical exception."""
+    is_safe: bool = Field(description="Whether it is safe to resume or continue the operation.")
+    reasoning: str = Field(description="Detailed assessment of system hazards or limits.")
+    next_action: str = Field(description="Next structural node to trigger: 'RESUME' or 'STOP'.")
 
-class ProgressSnapshot(BaseModel):
-    """Telemetry/metrics collected during work execution."""
-    metrics_collected: TelemetryMetrics = Field(description="Key metrics parsed from telemetry. Must contain database_latency_ms and inventory_accuracy_pct.")
-    budget_spent_this_turn: int = Field(description="Credits/cost spent during this turn.")
-    current_status: str = Field(description="Current status assessment. Must be one of: 'on_track', 'off_track', or 'blocked'.")
-    explanation: str = Field(description="Detailed reasoning for the status assessment.")
-
-class FixAction(BaseModel):
-    """Adaptation action proposed by the adapter agent."""
-    fix_type: str = Field(description="Type of adaptation: 'ChangePlan', 'GetMoreResources', or 'ChangeGoal'.")
-    value: str = Field(description="Detailed explanation/value of the fix action.")
+class ErrorRecord(BaseModel):
+    """Record of an error occurrence, captured for telemetry and learning."""
+    attempt: int = Field(description="The attempt number during which the error occurred.")
+    error_msg: str = Field(description="The exception or error message text.")
+    category: str = Field(description="The triage category assigned to this error.")
+    action_taken: str = Field(description="The action executed to handle or mitigate the error.")
 
 class State(BaseModel):
-    """State for the Goal Setting & Monitoring orchestrator."""
-    query: str
-    goal_spec: Optional[GoalSpec] = None
-    current_plan: str = "None"
-    last_worker_output: str = ""
-    step_count: int = 0
-    budget_spent: int = 0
-    status_history: List[ProgressSnapshot] = []
+    """State for the Exception Handling & Recovery orchestrator."""
+    query: str = Field(description="The overall task or query description.")
+    scenario: str = Field(default="transient_success", description="Active test scenario: 'transient_success', 'permanent_fallback', or 'critical_emergency'.")
     
-    # Execution states
-    is_achieved: bool = False
-    is_blocked: bool = False
-    fix_action: Optional[FixAction] = None
+    # Pre-execution checks
+    safety_checked: bool = False
+    
+    # Execution metrics and attempt tracking
+    call_attempts: int = 0
+    max_retries: int = 3
+    current_wait_sec: float = 0.0
+    
+    # Exception handling & telemetry
+    error_history: List[ErrorRecord] = []
+    last_error: Optional[str] = None
+    backup_plan_selected: Optional[BackupOption] = None
+    
+    # Emergency state tracking
+    emergency_saved: bool = False
+    emergency_alerted: bool = False
+    safety_verdict: Optional[SafetyVerdict] = None
+    
+    # Final resolution outcome
+    operation_outcome: str = "PENDING"  # SUCCESS, RECOVERED, EMERGENCY_STOP
+    learned_patterns: str = ""
     final_report: Optional[str] = None
 
 class Dependencies(BaseModel):
     """Injectable agent dependencies."""
-    goal_creator_agent: Any
-    worker_agent: Any
-    monitor_agent: Any
-    adapter_agent: Any
+    safety_agent: Any
+    service_agent: Any
+    triage_agent: Any
+    recovery_agent: Any
+    learning_agent: Any

@@ -1,48 +1,89 @@
-# Goal Setting & Monitoring Pattern 🎯📈
+# Exception Handling & Recovery 🛡️🔄
 
-A robust, premium agentic orchestrator implementing the **Goal Setting & Monitoring Design Pattern** powered by `pydantic-ai` and `pydantic-graph`. 
+A robust, premium agentic orchestrator implementing the **Exception Handling and Recovery Design Pattern** powered by `pydantic-ai` and `pydantic-graph`. 
 
-The system guides multi-agent workflows through structured execution: establishing specific SLA goals, conducting engineering tasks, auditing real-time telemetry metrics, dynamically catching SLA deviations, triggering self-healing adaptation loops, and publishing detailed project completion reports.
+The system governs complex multi-agent workflows through error-resilient structures: conducting operations, wrapping steps in safety checks, dynamically intercepting exceptions, triaging failure severity, executing exponential backoffs, degrading gracefully via fallbacks (default responses / cached databases), and securing state during critical failures before logging patterns and reinforcing improvements.
 
 ---
 
 ## 🌟 Modern Design Pattern Architecture
 
-Rather than performing tasks blindly, this system operates under a continuous telemetry feedback loop to guarantee quality, performance, and budget constraints:
+Rather than failing catastrophically on unexpected inputs or service outages, this system executes operations within a strict safety and self-healing framework:
 
 ```mermaid
 graph TD
-    Start[Vague Objective Input] --> Create[Create Goal Node]
-    Create -->|SMART Spec & SLAs| Start_Work[Start Work Node]
-    Start_Work -->|Execute & Deliver| Watch[Watch Progress Node]
-    Watch -->|Collect Metrics & Telemetry| Compare{Compare Node: On Track?}
+    Start[Try to Do Something] --> Wrap[Add Safety Checks]
     
-    Compare -->|Yes| Done{Goal Achieved Node?}
-    Compare -->|No - SLA Breach| Alarm[Trigger Alarm / Escalate]
+    Wrap --> Call[Make the Call]
+    Call --> External[Call External Service]
+    External --> Tool[Use a Tool]
+    External --> Service[Use a Service]
     
-    Alarm --> Fix[Fix Node: Formulate Adaptation]
-    Fix -->|ChangePlan / Resources| Start_Work
+    Tool --> Result{Did It Work?}
+    Service --> Result
     
-    Done -->|Yes| Success[SUCCESS]
-    Done -->|No / Budget Left| Start_Work
+    Result -->|Success| Process[Use the Result]
+    Result -->|Error| Catch[Catch the Error]
     
-    Success --> Report[Report Node: Project Summary]
-    Report --> End[Project Complete]
+    Catch --> WhatKind{What Kind of Error?}
+    
+    WhatKind -->|Temporary| Retry[Try Again]
+    WhatKind -->|Permanent| Backup[Use Backup Plan]
+    WhatKind -->|Critical| Emergency[Emergency Response]
+    
+    Retry --> Wait[Wait a Bit]
+    Wait --> AddTime[Wait Longer Each Time]
+    AddTime --> Count{How Many Tries?}
+    
+    Count -->|Less Than Max| Call
+    Count -->|Too Many| Backup
+    
+    Backup --> Options{Backup Options}
+    
+    Options --> Simple[Use Simpler Method]
+    Options --> Saved[Use Saved Data]
+    Options --> Default[Use Default Answer]
+    Options --> Human[Get Human Help]
+    
+    Simple --> Recover[Start Recovery]
+    Saved --> Recover
+    Default --> Recover
+    Human --> Recover
+    
+    Emergency --> SaveWork[Save Current Work]
+    SaveWork --> Alert[Alert the Team]
+    
+    Alert --> Safety{Is It Safe to Continue?}
+    
+    Safety -->|Over Limit| Stop[Emergency Stop]
+    Safety -->|OK| Resume[Pick Up Where We Left Off]
+    
+    Recover --> Record[Record What Happened]
+    Resume --> Record
+    Stop --> Record
+    
+    Record --> Track[Track Error Patterns]
+    Track --> Learn[Learn From Errors]
+    
+    Learn --> Improve[Improve for Next Time]
+    Process --> Success[Task Completed]
+    Improve --> End[Continue Working]
+    Success --> End
 ```
 
 ---
 
 ## 🛠️ Orchestrator State Machine Nodes
 
-The orchestrator utilizes **Pydantic Graph** to govern state transitions through 7 core nodes:
+The orchestrator utilizes **Pydantic Graph** to govern state transitions through core nodes:
 
-1. **`CreateGoalNode`**: Translates user requirements into a concrete **SMART Goal Specification** (Specific, Measurable, Achievable, Relevant, Limits, and Quality Standard SLAs).
-2. **`StartWorkNode`**: Directs the system's engineering agent to perform the targeted tasks for the current turn.
-3. **`WatchProgressNode`**: Collects runtime telemetry data (e.g., database read latencies, data accuracy metrics, credit consumption logs).
-4. **`CompareNode`**: Audits measured metrics against defined SLAs. Dynamically sounds an alarm if standards are violated (e.g., database read latency exceeds the `50ms` SLA).
-5. **`FixNode`**: Evaluates the root cause of off-track runs and selects an optimal adaptation strategy (e.g., `ChangePlan` to implement database indexing, replication, or Redis caching).
-6. **`GoalAchievedNode`**: Assesses whether quality targets are fully satisfied, monitoring deadlines and resource limits to make stop-or-continue decisions.
-7. **`ReportNode`**: Compiles and logs a comprehensive **Project Complete Monitoring Report** tracking step history, credits consumed, and final SLA status.
+1. **`SafetyChecksNode`**: Validates request parameters and environmental variables before initiating external calls.
+2. **`MakeCallNode`**: Triggers external services or tool invocations and intercepts thrown Python exceptions natively.
+3. **`CatchErrorNode`**: Invokes the **SRE Diagnosis Agent** to parse exception details and categorize the error into `Temporary`, `Permanent`, or `Critical`.
+4. **`RetryNode`**: Evaluates retry counts and applies exponential backoff wait times (e.g. `2^attempt` seconds) to gracefully handle transient hiccups.
+5. **`FallbackNode`**: Dynamically chooses a graceful degradation backup option (e.g., switches to locally cached data or serves generic safe default answers).
+6. **`EmergencyNode`**: Serializes transaction memory snapshots, dispatches alarm triggers to Slack/PagerDuty, and evaluates whether it is safe to resume.
+7. **`RecordNode`**: Synthesizes the run event log, compiling learned lessons, frequency, and actionable improvements for future execution.
 
 ---
 
@@ -55,7 +96,7 @@ The orchestrator utilizes **Pydantic Graph** to govern state transitions through
 
 ### ⚙️ Quick Installation
 
-1. **Clone the repository and set up a virtual environment**:
+1. **Clone the repository and activate virtual environment**:
    ```powershell
    python -m venv .venv
    .venv\Scripts\Activate.ps1
@@ -79,18 +120,22 @@ The orchestrator utilizes **Pydantic Graph** to govern state transitions through
 
 ## 🧪 Running the Showcase
 
-To drive the self-monitoring simulation, execute the main entrypoint:
+To run the three high-fidelity reliability simulations, execute:
 
 ```powershell
 python main.py
 ```
 
-### 🔁 The Simulated Scenario (Supply-Chain Point-Reads)
-The showcase runs a simulated point-read workload scenario targeting **10,000 SKUs and 5 Warehouses** under a rigid SLA constraint:
-- **Turn 1 (Establish Base DB Schema)**: Base Postgres tables are created. Telemetry reveals a **database latency spike of 120ms** (breaching the `< 50ms` SLA constraint). 
-- **Compare & Fix Nodes**: The orchestrator triggers an alarm, analyzes the latency spike, and formulates a `ChangePlan` adaptation: *implementing an atomic Redis cache-aside invalidation architecture*.
-- **Turn 2 (Execute Caching Adaptation)**: The caching architecture is deployed. The telemetry monitor detects **latency dropping to 15ms** and **data accuracy hitting 99.1%** (satisfying all SLA constraints).
-- **Goal Achieved Node**: Successfully flags achievement, stops work, and logs the final complete report.
+### 🔁 The Three Simulated Showcases
+1. **Scenario 1: Transient Error Recovery**:
+   - *Error*: Sockets fail on attempts 1 and 2.
+   - *Resolution*: Triage flags as `Temporary`, retries with exponential backoffs, and completes successfully on attempt 3.
+2. **Scenario 2: Permanent Error Handling**:
+   - *Error*: Revoked API key fails with standard `PermissionError` (401).
+   - *Resolution*: Triage flags as `Permanent`, switches to backup plan (Cached Data Replica), and recovers gracefully.
+3. **Scenario 3: Critical System Fault**:
+   - *Error*: Disk full fails with fatal `OSError`.
+   - *Resolution*: Triage flags as `Critical`, serializes memory state, sounds alarms, evaluates safety constraints to proceed, and logs full SRE post-mortem reports.
 
 ---
 
@@ -100,13 +145,13 @@ The showcase runs a simulated point-read workload scenario targeting **10,000 SK
 ├── agentic_system/
 │   ├── __init__.py
 │   ├── config.py       # Configuration and Azure OpenAI client setup
-│   ├── models.py       # SMART Goal specs, TelemetryMetrics, state models
-│   ├── prompts.py      # System prompts and simulated turn telemetry metrics
-│   ├── agents.py       # GoalCreator, Worker, Monitor, and Adapter agents
-│   └── graph.py        # pydantic-graph Orchestrator node routing definitions
-├── main.py             # Entrypoint driving the showcase run loop
-├── README.md           # This premium documentation
-├── about.md            # Goal Setting & Monitoring design patterns guide
+│   ├── models.py       # Pydantic schemas: Exception triage, Error Records, State
+│   ├── prompts.py      # SRE Triage, Recovery Selection, and Learning prompts
+│   ├── agents.py       # Safety, Service, Triage, Recovery, and Learning agents
+│   └── graph.py        # pydantic-graph Orchestrator definitions & Node classes
+├── main.py             # Entrypoint driving the three showcase scenarios
+├── README.md           # Premium SRE documentation
+├── about.md            # Exception Handling & Recovery pattern guide
 └── diagram.mmd         # Mermaid flowchart diagram
 ```
 
@@ -114,6 +159,5 @@ The showcase runs a simulated point-read workload scenario targeting **10,000 SK
 
 ## 🛡️ Robust Portability & Fallbacks
 
-- **High-Fidelity Mocks**: When `AZURE_OPENAI_API_KEY` is not detected in `.env`, the system automatically runs using high-fidelity offline mock agents that replicate identical SLA states, allowing local development and offline showcase evaluations.
-- **Pydantic Tool Schema Validation**: Implements explicit Pydantic model definitions (`TelemetryMetrics` with dictionary-like accessor methods) to ensure 100% reliable structured tool-calling schema parsing across all OpenAI / Azure LLM models.
-- **Self-Healing Retries**: Wrapper agents use configured validation retries (`retries=3`) to automatically correct and recover from temporary JSON formatting errors.
+- **High-Fidelity Mocks**: Automatically active when `AZURE_OPENAI_API_KEY` is not present, replicating identical self-healing telemetry and logs offline.
+- **Pydantic Validation Retries**: Wrapper agents use configured validation retries to guarantee 100% reliable structured tool-calling schema parsing across LLMs.

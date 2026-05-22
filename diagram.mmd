@@ -1,72 +1,64 @@
 graph TD
-    Start[What Do We Want to Achieve?] --> Create[Create Clear Goals]
+    Start[Try to Do Something] --> Wrap[Add Safety Checks]
     
-    Create --> Specific[Make It Specific]
-    Create --> Measurable[Make It Measurable]
-    Create --> Achievable[Make It Achievable]
-    Create --> Relevant[Make It Matter]
-    Create --> TimeBound[Set a Deadline]
+    Wrap --> Call[Make the Call]
+    Call --> External[Call External Service]
+    External --> Tool[Use a Tool]
+    External --> Service[Use a Service]
     
-    Specific --> Rules[Set the Rules]
-    Measurable --> Rules
-    Achievable --> Rules
-    Relevant --> Rules
-    TimeBound --> Rules
+    Tool --> Result{Did It Work?}
+    Service --> Result
     
-    Rules --> Budget[How Much Can We Spend?]
-    Rules --> Resources[What Resources Do We Have?]
-    Rules --> Deadline[When Must It Be Done?]
+    Result -->|Success| Process[Use the Result]
+    Result -->|Error| Catch[Catch the Error]
     
-    Budget --> Targets[Set Success Targets]
-    Resources --> Targets
-    Deadline --> Targets
+    Catch --> WhatKind{What Kind of Error?}
     
-    Targets --> Quality[Set Quality Standards]
-    Quality --> Start_Work[Start Working]
+    WhatKind -->|Temporary| Retry[Try Again]
+    WhatKind -->|Permanent| Backup[Use Backup Plan]
+    WhatKind -->|Critical| Emergency[Emergency Response]
     
-    Start_Work --> Watch{Watch Progress}
+    Retry --> Wait[Wait a Bit]
+    Wait --> AddTime[Wait Longer Each Time]
+    AddTime --> Count{How Many Tries?}
     
-    Watch --> Status[Check Current Status]
-    Watch --> Save[Save Progress Points]
-    Watch --> Track[Track How We're Doing]
+    Count -->|Less Than Max| Call
+    Count -->|Too Many| Backup
     
-    Status --> Numbers[Collect the Numbers]
-    Save --> Numbers
-    Track --> Numbers
+    Backup --> Options{Backup Options}
     
-    Numbers --> Compare{Are We On Track?}
+    Options --> Simple[Use Simpler Method]
+    Options --> Saved[Use Saved Data]
+    Options --> Default[Use Default Answer]
+    Options --> Human[Get Human Help]
     
-    Compare -->|Yes| Continue[Keep Going]
-    Compare -->|Getting Off Track| Alert[Sound the Alarm]
-    Compare -->|Blocked| Escalate[Get Help]
+    Simple --> Recover[Start Recovery]
+    Saved --> Recover
+    Default --> Recover
+    Human --> Recover
     
-    Alert --> Why[Find Out Why]
-    Escalate --> Why
+    Emergency --> SaveWork[Save Current Work]
+    SaveWork --> Alert[Alert the Team]
     
-    Why --> Fix{How to Fix It?}
+    Alert --> Safety{Is It Safe to Continue?}
     
-    Fix --> Adjust[Change the Plan]
-    Fix --> More_Resources[Get More Resources]
-    Fix --> Change_Goal[Change the Goal]
+    Safety -->|Over Limit| Stop[Emergency Stop]
+    Safety -->|OK| Resume[Pick Up Where We Left Off]
     
-    Adjust --> Start_Work
-    More_Resources --> Start_Work
-    Change_Goal --> Start_Work
+    Recover --> Record[Record What Happened]
+    Resume --> Record
+    Stop --> Record
     
-    Continue --> Done{Goal Achieved?}
+    Record --> Track[Track Error Patterns]
+    Track --> Learn[Learn From Errors]
     
-    Done -->|Yes| Success[We Did It!]
-    Done -->|No| Check_Budget{Still Have Budget?}
-    
-    Check_Budget -->|Yes| Watch
-    Check_Budget -->|No| Decision[Stop or Get More?]
-    
-    Success --> Report[Create Final Report]
-    Decision --> Report
-    Report --> End[Project Complete]
+    Learn --> Improve[Improve for Next Time]
+    Process --> Success[Task Completed]
+    Improve --> End[Continue Working]
+    Success --> End
 
     style Start fill:#e1f5fe
-    style Create fill:#fff59d
-    style Watch fill:#fff9c4
-    style Done fill:#f3e5f5
+    style WhatKind fill:#fff59d
+    style Options fill:#fff9c4
+    style Safety fill:#ffccbc
     style End fill:#c8e6c9
