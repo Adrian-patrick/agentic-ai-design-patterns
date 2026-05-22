@@ -3,16 +3,17 @@ from typing import Optional
 from pydantic_ai import Agent
 from .config import create_model
 from .prompts import (
-    triage_system_prompt,
-    recovery_system_prompt,
-    learning_system_prompt,
+    gate_identifier_system_prompt,
+    ui_presenter_system_prompt,
+    feedback_learning_system_prompt,
+    fatigue_monitor_system_prompt,
 )
 from .models import (
-    ExceptionCategory,
-    BackupOption,
-    ErrorTriageResult,
-    SafetyVerdict,
-    ErrorRecord,
+    GateType,
+    DecisionType,
+    QueueItem,
+    HumanDecision,
+    FeedbackLog,
 )
 
 # Check if Azure OpenAI API key is provided
@@ -23,193 +24,150 @@ IS_CONFIGURED = all(
 if not IS_CONFIGURED:
     print("[Info] Azure credentials not found. Falling back to local high-fidelity mock agents for showcase...")
 
-class SafetyCheckAgent:
-    """Performs pre-execution safety and system prerequisite checks."""
-    async def check(self, query: str, scenario: str) -> bool:
-        # Pre-execution safety checking
-        print(f"   [Safety Agent] Inspecting request payload and environment config...")
-        if scenario == "critical_emergency" and "fatal" in query.lower():
-            # Pretend we detected a dangerous operation beforehand, but let it proceed for testing
-            print("   [Safety Agent] WARNING: Request contains terms matching high-severity metrics.")
-        return True
-
-class ServiceCallAgent:
-    """Simulates external service calls or tool invocations and raises realistic exceptions."""
-    async def run(self, scenario: str, attempt: int) -> str:
-        print(f"   [Service Agent] Attempting service call (Attempt {attempt})...")
-        
-        if scenario == "transient_success":
-            if attempt == 1:
-                raise ConnectionResetError("Connection timed out on socket 443 (network glitch).")
-            elif attempt == 2:
-                raise ConnectionAbortedError("Database pool connection lost temporarily.")
-            else:
-                return "Data retrieved successfully: [User ID: 8841, Level: Admin, Region: IN]"
-                
-        elif scenario == "permanent_fallback":
-            raise PermissionError("API key revoked or expired (Error Code: 401 Unauthorized).")
-            
-        elif scenario == "critical_emergency":
-            raise OSError("Critical System Failure: database storage disk 100% full, write permissions disabled.")
-            
-        else:
-            return "Generic success response."
-
-class TriageAgent:
-    """Diagnoses and classifies exceptions into Temporary, Permanent, or Critical categories."""
+class DecisionGateAgent:
+    """Classifies incoming task queries into one of the four HITL Decision Gates."""
     def __init__(self):
         if IS_CONFIGURED:
             self.agent = Agent(
                 model=create_model(),
-                system_prompt=triage_system_prompt,
-                output_type=ErrorTriageResult,
+                system_prompt=gate_identifier_system_prompt,
                 retries=3,
             )
 
-    async def run(self, query: str, scenario: str, error_msg: str) -> ErrorTriageResult:
+    async def run(self, query: str, scenario: str) -> GateType:
         if not IS_CONFIGURED:
-            # High-fidelity local triage based on scenario
-            if scenario == "transient_success":
-                return ErrorTriageResult(
-                    category=ExceptionCategory.TEMPORARY,
-                    severity="Medium",
-                    reasoning="Connection timeout / abort errors are transient infrastructure glitches. Sockets should recover after a short pause.",
-                    recommended_action="Wait with exponential backoff and retry the connection."
-                )
-            elif scenario == "permanent_fallback":
-                return ErrorTriageResult(
-                    category=ExceptionCategory.PERMANENT,
-                    severity="High",
-                    reasoning="Permission Error: 401 Unauthorized indicates that the credential itself is revoked. Retrying will not solve this.",
-                    recommended_action="Gracefully degrade to alternate backup plan using cached/saved data."
-                )
+            # High-fidelity mock gate selection based on scenario
+            if scenario == "approve":
+                return GateType.APPROVE
+            elif scenario == "deny":
+                return GateType.REVIEW
+            elif scenario == "edit":
+                return GateType.EDIT
             else:
-                return ErrorTriageResult(
-                    category=ExceptionCategory.CRITICAL,
-                    severity="High",
-                    reasoning="OS Error: Disk 100% full blocks all database writes. Proceeding with execution could corrupt database files.",
-                    recommended_action="Preserve current memory state immediately, alert the team, and run safety checks."
-                )
+                return GateType.COMPLEX
 
-        prompt = (
-            f"Query: {query}\n"
-            f"Active Scenario: {scenario}\n"
-            f"Exception Message: {error_msg}\n"
-            "Please triage this error."
-        )
-        result = await self.agent.run(prompt)
-        return result.output
-
-class RecoveryAgent:
-    """Selects backup solutions for permanent errors, or evaluates safety for critical alerts."""
-    def __init__(self):
-        if IS_CONFIGURED:
-            self.agent = Agent(
-                model=create_model(),
-                system_prompt=recovery_system_prompt,
-                retries=3,
-            )
-
-    async def select_backup(self, query: str, error_msg: str) -> BackupOption:
-        if not IS_CONFIGURED:
-            # Fallback backup option: we want to demonstrate the 'Saved Data' fallback
-            return BackupOption.SAVED_DATA
-
-        prompt = (
-            f"TASK: Select Backup Option\n"
-            f"Query: {query}\n"
-            f"Error Encountered: {error_msg}\n\n"
-            "Respond with one of these precise strings: 'Simple Method', 'Saved Data', 'Default Answer', or 'Get Human Help'."
-        )
-        # Using string matching for backup selection to be resilient
-        result = await self.agent.run(prompt)
+        result = await self.agent.run(f"Query: {query}\nScenario: {scenario}")
         content = result.output.strip()
-        for option in BackupOption:
-            if option.value.lower() in content.lower():
-                return option
-        return BackupOption.DEFAULT_ANSWER
+        for gate in GateType:
+            if gate.value.lower() in content.lower():
+                return gate
+        return GateType.APPROVE
 
-    async def evaluate_safety(self, error_history: list[ErrorRecord]) -> SafetyVerdict:
-        if not IS_CONFIGURED:
-            # High-fidelity safety verdict for critical disk full error
-            return SafetyVerdict(
-                is_safe=False,
-                reasoning="The database partition is reported at 100% capacity. Any continuation of system writes is unsafe and will result in transactional failures.",
-                next_action="STOP"
-            )
-
-        history_str = "\n".join([f"Attempt {r.attempt}: [{r.category}] {r.error_msg} -> Action: {r.action_taken}" for r in error_history])
-        prompt = (
-            f"TASK: Formulate Safety Verdict\n"
-            f"Critical Error History Log:\n{history_str}\n\n"
-            "Please analyze the situation and decide if it is safe to RESUME or if we must trigger a safety STOP.\n"
-            "Your output must adhere to the SafetyVerdict schema: is_safe (bool), reasoning (str), next_action ('RESUME' or 'STOP')."
-        )
-        
-        # We instantiate a specialized safety agent returning SafetyVerdict
-        safety_agent = Agent(
-            model=create_model(),
-            system_prompt=recovery_system_prompt,
-            output_type=SafetyVerdict,
-        )
-        result = await safety_agent.run(prompt)
-        return result.output
-
-class LearningAgent:
-    """Reviews the error log history and generates insights, tracking patterns to prevent future occurrences."""
+class UIPresenterAgent:
+    """Prepares detailed Review Queue items with SLA timers and original content context."""
     def __init__(self):
         if IS_CONFIGURED:
             self.agent = Agent(
                 model=create_model(),
-                system_prompt=learning_system_prompt,
-                output_type=str,
+                system_prompt=ui_presenter_system_prompt,
+                output_type=QueueItem,
                 retries=3,
             )
 
-    async def run(self, error_history: list[ErrorRecord], outcome: str) -> str:
+    async def run(self, query: str, scenario: str) -> QueueItem:
         if not IS_CONFIGURED:
-            # Return highly formatted, premium, and structured analysis text
-            history_str = "\n".join([f"  * Attempt {r.attempt} [{r.category}]: {r.error_msg} -> {r.action_taken}" for r in error_history])
-            
-            if outcome == "SUCCESS":
-                return (
-                    "### 1. Error Patterns & Frequency\n"
-                    "- 2x Connection resets/timeouts encountered sequentially.\n"
-                    "- Frequency: 100% of initial attempts failed before resolving.\n\n"
-                    "### 2. Root Cause Summary\n"
-                    "- Infrastructure network interface jitter resulting in socket drops on port 443.\n\n"
-                    "### 3. Learned Lessons & Improvements\n"
-                    "- **Lesson**: Network glitch was temporary; retries successfully healed the system.\n"
-                    "- **Action**: Implement connection pooling and adjust the TCP keep-alive settings to reduce socket drops."
+            # High-fidelity queue generation
+            if scenario == "approve":
+                return QueueItem(
+                    urgency="Low",
+                    content_draft="Blogging Draft: Agentic design patterns, such as Human-in-the-Loop systems, ensure safety and trust in production AI models.",
+                    original_agent_output="Agentic design patterns, such as Human-in-the-Loop systems, ensure safety...",
+                    sla_timer_sec=300,
+                    context_summary="Marketing blog draft review"
                 )
-            elif outcome == "RECOVERED":
-                return (
-                    "### 1. Error Patterns & Frequency\n"
-                    "- 1x PermissionError (401 Unauthorized) encountered.\n"
-                    "- Frequency: Single persistent error blocking primary service call.\n\n"
-                    "### 2. Root Cause Summary\n"
-                    "- API keys expired/revoked, rendering primary cloud API calls completely invalid.\n\n"
-                    "### 3. Learned Lessons & Improvements\n"
-                    "- **Lesson**: Permanent errors cannot be retried away; a fallback strategy is vital.\n"
-                    "- **Action**: Set up active API credential expiration alerts and automate key rotation."
+            elif scenario == "deny":
+                return QueueItem(
+                    urgency="Medium",
+                    content_draft="Resume Summary - Candidate Name: Bob Rustacean, Tech Stack: Python, C++, Go. Recommendation: Recommend Hire for Rust Team.",
+                    original_agent_output="Recommend Hire for Rust Team.",
+                    sla_timer_sec=180,
+                    context_summary="Resume Screening Gate - Tech Recruiter review"
                 )
-            else: # EMERGENCY_STOP
-                return (
-                    "### 1. Error Patterns & Frequency\n"
-                    "- 1x OSError (Disk 100% full, write permissions disabled) encountered.\n"
-                    "- Frequency: High-severity fatal system error.\n\n"
-                    "### 2. Root Cause Summary\n"
-                    "- Disk storage capacity exceeded. Write operations are physically blocked.\n\n"
-                    "### 3. Learned Lessons & Improvements\n"
-                    "- **Lesson**: Continuing database writes on full partition poses corruption risks. Immediate STOP is correct.\n"
-                    "- **Action**: Set up automated disk cleanup cron jobs and add system alerts at 85% disk usage."
+            elif scenario == "edit":
+                return QueueItem(
+                    urgency="Medium",
+                    content_draft="Target Translation: French: Bonjour le monde (Original: Hello World)",
+                    original_agent_output="Bonjour le monde",
+                    sla_timer_sec=180,
+                    context_summary="French Translation review gate"
+                )
+            else:
+                return QueueItem(
+                    urgency="High",
+                    content_draft="Initiate bank wire transfer: $12,500.00 to account ACT-8812. Reason: Enterprise client refund.",
+                    original_agent_output="Wire $12500 enterprise refund",
+                    sla_timer_sec=60,
+                    context_summary="Complex Case: Refund exceeds standard agent limit of $10,000"
                 )
 
-        history_str = "\n".join([f"Attempt {r.attempt}: [{r.category}] {r.error_msg} -> {r.action_taken}" for r in error_history])
         prompt = (
-            f"Outcome: {outcome}\n"
-            f"Error logs history:\n{history_str}\n\n"
-            "Analyze and provide the final continuous learning and pattern tracking report."
+            f"Query: {query}\n"
+            f"Scenario: {scenario}\n"
+            "Build the queue presentation."
         )
         result = await self.agent.run(prompt)
         return result.output
+
+class FeedbackLearningAgent:
+    """Synthesizes human reviews, edits, and rejections into structured guidelines to train the agent."""
+    def __init__(self):
+        if IS_CONFIGURED:
+            self.agent = Agent(
+                model=create_model(),
+                system_prompt=feedback_learning_system_prompt,
+                output_type=FeedbackLog,
+                retries=3,
+            )
+
+    async def run(self, decision: HumanDecision) -> FeedbackLog:
+        if not IS_CONFIGURED:
+            # High-fidelity SRE training logs
+            if decision.decision == DecisionType.APPROVE:
+                return FeedbackLog(
+                    action=DecisionType.APPROVE,
+                    learning_points="Content draft was accurate, required no manual modifications.",
+                    guidelines_updated="Continue applying matching voice and clarity rules."
+                )
+            elif decision.decision == DecisionType.DENY:
+                return FeedbackLog(
+                    action=DecisionType.DENY,
+                    learning_points=f"Rejection: {decision.reviewer_feedback}. Candidate lacks critical Rust experience.",
+                    guidelines_updated="Update filtering constraint: candidates for Rust team must explicitly list Rust, not just generic Go/Python."
+                )
+            elif decision.decision == DecisionType.EDIT:
+                return FeedbackLog(
+                    action=DecisionType.EDIT,
+                    learning_points=f"Human Edit: Original draft '{decision.reviewer_feedback}' modified to '{decision.edited_content}'.",
+                    guidelines_updated="Update translation engine prompts to prioritize colloquial phrasing ('Bonjour tout le monde') for audience-facing messages."
+                )
+            else:
+                return FeedbackLog(
+                    action=DecisionType.TAKEOVER,
+                    learning_points=f"Takeover: {decision.takeover_reason}. Wire transfers >= $10,000 require senior financial clearance.",
+                    guidelines_updated="System rules updated: block any automatic wire transfers >= $10,000. Force manual handoff at node start."
+                )
+
+        prompt = (
+            f"Reviewer Decision: {decision.decision.value}\n"
+            f"Feedback notes: {decision.reviewer_feedback}\n"
+            f"Edited content: {decision.edited_content}\n"
+            f"Takeover reason: {decision.takeover_reason}\n\n"
+            "Synthesize this into a training feedback log."
+        )
+        result = await self.agent.run(prompt)
+        return result.output
+
+class FatigueMonitorAgent:
+    """SRE Human Fatigue monitor assessing human queues and proposing load balancing adjustments."""
+    async def evaluate(self, scenario: str) -> tuple[float, str]:
+        print("   [Fatigue Monitor] Auditing reviewer key indicators (Queue length, SLA latency)...")
+        if scenario == "takeover_fatigue":
+            # Simulate high reviewer fatigue spike
+            score = 0.85
+            action = "REDUCE"
+            print(f"   [Fatigue Monitor] ALERT: Reviewer Fatigue index = {score:.2f} (SPIKE)! Queue overload detected.")
+        else:
+            score = 0.22
+            action = "MAINTAIN"
+            print(f"   [Fatigue Monitor] Reviewer Fatigue index = {score:.2f} (Normal). Processing rate steady.")
+        return score, action

@@ -1,82 +1,82 @@
-# Exception Handling and Recovery Pattern
+# Human-in-the-Loop (HITL) Pattern
 
 ## When to Use
 
-- **Production environments**: Any system requiring high reliability
-- **External dependencies**: When relying on APIs or services
-- **Critical operations**: Tasks that must not fail completely
-- **Unpredictable inputs**: Handling edge cases and anomalies
-- **Network operations**: Managing connectivity issues
-- **Resource constraints**: Dealing with limits and quotas
+- **High-stakes decisions**: When errors have significant consequences
+- **Regulatory compliance**: Required human oversight for legal reasons
+- **Quality assurance**: Ensuring output meets standards
+- **Edge cases**: Handling unusual or ambiguous situations
+- **Training data generation**: Using human feedback to improve
+- **Trust building**: Gradual automation with human validation
 
 ## Where It Fits
 
-- **API integrations**: Handling service outages and rate limits
-- **Data pipelines**: Managing corrupt data and processing failures
-- **User-facing systems**: Maintaining service availability
-- **Financial transactions**: Ensuring transaction integrity
-- **IoT systems**: Handling device failures and connectivity issues
+- **Content moderation**: Reviewing sensitive or borderline content
+- **Medical diagnosis**: Physician verification of AI recommendations
+- **Financial approvals**: Human authorization for large transactions
+- **Legal document review**: Attorney oversight of contracts
+- **Hiring decisions**: Human review of AI-screened candidates
 
 ## Pros
 
-- **Reliability**: System continues operating despite failures
-- **Graceful degradation**: Provides partial functionality when full service unavailable
-- **Self-healing**: Automatic recovery from transient issues
-- **User experience**: Minimizes disruption to users
-- **Debugging support**: Comprehensive error logging
-- **Learning capability**: Improves handling over time
-- **State preservation**: Can resume after interruptions
+- **Quality assurance**: Human judgment catches AI errors
+- **Compliance**: Meets regulatory requirements
+- **Learning source**: Human feedback improves system
+- **Trust**: Users confident in human oversight
+- **Flexibility**: Humans handle edge cases well
+- **Accountability**: Clear responsibility chain
+- **Risk mitigation**: Prevents costly mistakes
 
 ## Cons
 
-- **Complexity increase**: Error handling adds code complexity
-- **Performance overhead**: Try/catch and retries add latency
-- **False positives**: May retry when unnecessary
-- **Resource consumption**: Retries and fallbacks use resources
-- **Cascading failures**: Poor handling can worsen problems
-- **Testing difficulty**: Hard to test all failure scenarios
-- **Maintenance burden**: Error handling code needs updates
+- **Scalability limits**: Human bandwidth constrains throughput
+- **Cost increase**: Human reviewers are expensive
+- **Latency addition**: Waiting for human response delays process
+- **Inconsistency**: Different humans make different decisions
+- **Fatigue effects**: Quality degrades with reviewer tiredness
+- **Training requirements**: Reviewers need domain expertise
+- **Availability issues**: 24/7 coverage is challenging
 
 ## Real-World Examples
 
-1. **Payment Processing System**:
-   - Retry failed transactions with backoff
-   - Fallback to alternative payment gateways
-   - Save transaction state for manual review
-   - Notify finance team of critical failures
-   - Automatic refund on persistent failures
+1. **Content Moderation Platform**:
+   - AI flags potentially problematic content
+   - Human reviewers make final decisions
+   - Complex cases escalated to senior moderators
+   - Reviewer feedback trains AI models
+   - Fatigue monitoring and rotation schedules
 
-2. **Data Integration Pipeline**:
-   - Handle malformed data gracefully
-   - Retry failed API calls with jitter
-   - Use cached data when services unavailable
-   - Checkpoint progress for resume capability
-   - Alert on data quality issues
+2. **Loan Approval System**:
+   - AI assesses credit risk
+   - Human reviews borderline applications
+   - Large loans require manual approval
+   - Explanations provided for denials
+   - Audit trail for compliance
 
-3. **Chatbot Customer Service**:
-   - Fallback to simpler responses on errors
-   - Escalate to human agents when stuck
-   - Save conversation state for handoff
-   - Retry knowledge base queries
-   - Default to FAQ responses
+3. **Medical Imaging Analysis**:
+   - AI detects potential abnormalities
+   - Radiologist confirms diagnoses
+   - Critical findings prioritized for review
+   - Second opinions for complex cases
+   - Continuous learning from corrections
 
-4. **Content Delivery Network**:
-   - Retry failed origin fetches
-   - Serve stale content when origin down
-   - Route to backup servers
-   - Implement circuit breakers
-   - Geographic failover strategies
+4. **Resume Screening**:
+   - AI filters initial applications
+   - HR reviews shortlisted candidates
+   - Diversity checks by humans
+   - Feedback improves screening algorithms
+   - Final interviews always human-led
 
-5. **Machine Learning Pipeline**:
-   - Handle model loading failures
-   - Fallback to simpler models
-   - Retry failed predictions
-   - Cache frequent predictions
-   - Graceful degradation of features
+5. **Translation Quality Control**:
+   - AI performs initial translation
+   - Human linguists review and edit
+   - Cultural sensitivity checks
+   - Technical terminology verification
+   - Style consistency enforcement
 
-6. **IoT Device Management**:
-   - Retry failed device commands
-   - Queue commands for offline devices
-   - Use last known state as fallback
-   - Implement watchdog timers
-   - Automatic device reboot protocols
+6. **Autonomous Vehicle Monitoring**:
+   - AI handles normal driving
+   - Remote operators handle edge cases
+   - Safety driver takeover capability
+   - Incident review and analysis
+   - Continuous improvement from interventions

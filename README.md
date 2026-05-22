@@ -1,89 +1,95 @@
-# Exception Handling & Recovery 🛡️🔄
+# Human-in-the-Loop (HITL) Pattern 👥🤖
 
-A robust, premium agentic orchestrator implementing the **Exception Handling and Recovery Design Pattern** powered by `pydantic-ai` and `pydantic-graph`. 
+A robust, premium agentic orchestrator implementing the **Human-in-the-Loop (HITL) Design Pattern** powered by `pydantic-ai` and `pydantic-graph`. 
 
-The system governs complex multi-agent workflows through error-resilient structures: conducting operations, wrapping steps in safety checks, dynamically intercepting exceptions, triaging failure severity, executing exponential backoffs, degrading gracefully via fallbacks (default responses / cached databases), and securing state during critical failures before logging patterns and reinforcing improvements.
+The system governs complex multi-agent workflows through error-resilient structures: conducting operations, routing decisions to specific gates (Approve, Review, Edit, Complex), batching and prioritizing human operator queues, rendering modern developer-oriented UI summaries with SLAs, intercepting human actions (Accept, Reject, Edit, Takeover), capturing continuous training feedback to automatically reinforce system prompts, and dynamically balancing reviewer fatigue by automatically throttling load and adjusting AI automation thresholds.
 
 ---
 
 ## 🌟 Modern Design Pattern Architecture
 
-Rather than failing catastrophically on unexpected inputs or service outages, this system executes operations within a strict safety and self-healing framework:
+Rather than operating entirely autonomously or requiring cumbersome manual intervention for every step, this system acts as a smart, load-balanced coordinator between agent autonomy and human oversight:
 
 ```mermaid
 graph TD
-    Start[Try to Do Something] --> Wrap[Add Safety Checks]
+    Start[Agent Processing] --> Identify[Identify Decision Points]
     
-    Wrap --> Call[Make the Call]
-    Call --> External[Call External Service]
-    External --> Tool[Use a Tool]
-    External --> Service[Use a Service]
+    Identify --> Gates{Decision Gates}
     
-    Tool --> Result{Did It Work?}
-    Service --> Result
+    Gates --> Approve[Approval Required]
+    Gates --> Review[Review Needed]
+    Gates --> Edit[Editing Checkpoint]
+    Gates --> Complex[Complex Case]
     
-    Result -->|Success| Process[Use the Result]
-    Result -->|Error| Catch[Catch the Error]
+    Approve --> Queue[Add to Review Queue]
+    Review --> Queue
+    Edit --> Queue
+    Complex --> Queue
     
-    Catch --> WhatKind{What Kind of Error?}
+    Queue --> Batch[Batch Similar Items]
+    Batch --> Priority[Prioritize by Urgency]
     
-    WhatKind -->|Temporary| Retry[Try Again]
-    WhatKind -->|Permanent| Backup[Use Backup Plan]
-    WhatKind -->|Critical| Emergency[Emergency Response]
+    Priority --> UI[Present in UI]
+    UI --> Context[Show Full Context]
+    Context --> Diff[Display Differences]
+    Diff --> SLA[Show SLA Timer]
     
-    Retry --> Wait[Wait a Bit]
-    Wait --> AddTime[Wait Longer Each Time]
-    AddTime --> Count{How Many Tries?}
+    SLA --> Human{Human Decision}
     
-    Count -->|Less Than Max| Call
-    Count -->|Too Many| Backup
+    Human -->|Approve| Accept[Accept Agent Output]
+    Human -->|Deny| Reject[Reject with Reason]
+    Human -->|Edit| Modify[Human Edits Content]
+    Human -->|Takeover| Manual[Full Manual Control]
     
-    Backup --> Options{Backup Options}
+    Accept --> Continue[Continue Workflow]
+    Reject --> Learn1[Capture Rejection Pattern]
+    Modify --> Learn2[Record Edit Changes]
+    Manual --> Learn3[Log Takeover Reason]
     
-    Options --> Simple[Use Simpler Method]
-    Options --> Saved[Use Saved Data]
-    Options --> Default[Use Default Answer]
-    Options --> Human[Get Human Help]
+    Learn1 --> Update[Update Agent Training]
+    Learn2 --> Update
+    Learn3 --> Update
     
-    Simple --> Recover[Start Recovery]
-    Saved --> Recover
-    Default --> Recover
-    Human --> Recover
+    Update --> Improve[Improve Future Decisions]
     
-    Emergency --> SaveWork[Save Current Work]
-    SaveWork --> Alert[Alert the Team]
+    Continue --> Track[Track Decision Metrics]
+    Improve --> Track
     
-    Alert --> Safety{Is It Safe to Continue?}
+    Track --> Fatigue{Monitor Fatigue}
     
-    Safety -->|Over Limit| Stop[Emergency Stop]
-    Safety -->|OK| Resume[Pick Up Where We Left Off]
+    Fatigue -->|High| Reduce[Reduce Human Load]
+    Fatigue -->|Normal| Maintain[Maintain Current Flow]
     
-    Recover --> Record[Record What Happened]
-    Resume --> Record
-    Stop --> Record
+    Reduce --> Automate[Increase Automation]
+    Maintain --> Report[Generate Reports]
+    Automate --> Report
     
-    Record --> Track[Track Error Patterns]
-    Track --> Learn[Learn From Errors]
-    
-    Learn --> Improve[Improve for Next Time]
-    Process --> Success[Task Completed]
-    Improve --> End[Continue Working]
-    Success --> End
+    Report --> End[Process Complete]
+
+    style Start fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px
+    style Gates fill:#fff59d,stroke:#fbc02d,stroke-width:2px
+    style Human fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
+    style Fatigue fill:#f3e5f5,stroke:#ab47bc,stroke-width:2px
+    style End fill:#c8e6c9,stroke:#4caf50,stroke-width:2px
 ```
 
 ---
 
 ## 🛠️ Orchestrator State Machine Nodes
 
-The orchestrator utilizes **Pydantic Graph** to govern state transitions through core nodes:
+The orchestrator utilizes **Pydantic Graph** to govern state transitions through 22 robust, self-documenting node structures:
 
-1. **`SafetyChecksNode`**: Validates request parameters and environmental variables before initiating external calls.
-2. **`MakeCallNode`**: Triggers external services or tool invocations and intercepts thrown Python exceptions natively.
-3. **`CatchErrorNode`**: Invokes the **SRE Diagnosis Agent** to parse exception details and categorize the error into `Temporary`, `Permanent`, or `Critical`.
-4. **`RetryNode`**: Evaluates retry counts and applies exponential backoff wait times (e.g. `2^attempt` seconds) to gracefully handle transient hiccups.
-5. **`FallbackNode`**: Dynamically chooses a graceful degradation backup option (e.g., switches to locally cached data or serves generic safe default answers).
-6. **`EmergencyNode`**: Serializes transaction memory snapshots, dispatches alarm triggers to Slack/PagerDuty, and evaluates whether it is safe to resume.
-7. **`RecordNode`**: Synthesizes the run event log, compiling learned lessons, frequency, and actionable improvements for future execution.
+1. **`StartNode`**: Initiates the agent processing cycle.
+2. **`IdentifyDecisionPointsNode`**: Evaluates incoming query context using the **Decision Gate Agent** to categorize the operation into specific gates.
+3. **`AddReviewQueueNode`**: Batches and prioritizes the task by urgency.
+4. **`UIPresentationNode`**: Formulates a detailed operator card complete with context summaries, diff comparisons, and SLA timers using the **UI Presenter Agent**.
+5. **`HumanDecisionNode`**: Intercepts physical user actions (simulated or live operator keypresses/mouse clicks).
+6. **`AcceptAgentOutputNode` / `RejectWithReasonNode` / `HumanEditsContentNode` / `FullManualControlNode`**: Specific nodes corresponding to the four primary decision branches.
+7. **`UpdateAgentTrainingNode`**: Extracts negative reinforcement, edits, or manual overrides and feeds them to the **Feedback Learning Agent**.
+8. **`ImproveFutureDecisionsNode`**: Synthesizes the corrections and dynamically appends new, specific guidelines/prompts to the AI agent.
+9. **`MonitorFatigueNode`**: Audits operator stress levels (SLA delays, throughput logs) using the **Fatigue Monitor Agent**.
+10. **`ReduceHumanLoadNode` / `IncreaseAutomationNode`**: Initiates SRE workload safety overrides: throttles human queues and bumps the system's baseline AI automation rate from `50%` to `85%` (offloading manual reviews).
+11. **`GenerateReportsNode` / `EndNode`**: Generates a beautiful SRE operational report and consolidates continuous learning logs.
 
 ---
 
@@ -120,22 +126,33 @@ The orchestrator utilizes **Pydantic Graph** to govern state transitions through
 
 ## 🧪 Running the Showcase
 
-To run the three high-fidelity reliability simulations, execute:
+To run the four high-fidelity reliability simulations, execute:
 
 ```powershell
 python main.py
 ```
 
-### 🔁 The Three Simulated Showcases
-1. **Scenario 1: Transient Error Recovery**:
-   - *Error*: Sockets fail on attempts 1 and 2.
-   - *Resolution*: Triage flags as `Temporary`, retries with exponential backoffs, and completes successfully on attempt 3.
-2. **Scenario 2: Permanent Error Handling**:
-   - *Error*: Revoked API key fails with standard `PermissionError` (401).
-   - *Resolution*: Triage flags as `Permanent`, switches to backup plan (Cached Data Replica), and recovers gracefully.
-3. **Scenario 3: Critical System Fault**:
-   - *Error*: Disk full fails with fatal `OSError`.
-   - *Resolution*: Triage flags as `Critical`, serializes memory state, sounds alarms, evaluates safety constraints to proceed, and logs full SRE post-mortem reports.
+### 🔁 The Four Simulated Showcases
+
+1. **Scenario 1: Human Approval (Approve Branch)**:
+   - *Task*: Reviewing a standard SRE guidelines marketing blog draft.
+   - *Gate*: `Approval Required` (Low Urgency).
+   - *Resolution*: Reviewer approves the output as compliant. System registers `0.22` fatigue score, maintaining baseline 50% automation.
+
+2. **Scenario 2: Human Denial & Learning (Deny Branch)**:
+   - *Task*: Evaluating a resume screening submission.
+   - *Gate*: `Review Needed` (Medium Urgency).
+   - *Resolution*: Reviewer rejects the output because the candidate lacks required senior native Rust experience. The SRE learning loop captures the rejection reason and automatically appends a strict language validation constraint to the agent prompts to improve future autonomous screenings.
+
+3. **Scenario 3: Human Editing (Edit Branch)**:
+   - *Task*: French translation quality checkpoint.
+   - *Gate*: `Editing Checkpoint` (Medium Urgency).
+   - *Resolution*: Reviewer polishes the translation draft. SRE learning loop logs the differences between the agent draft and human edit, updating the agent's prompts to prioritize colloquial phrasing and native usage.
+
+4. **Scenario 4: Manual Takeover & Fatigue Auto-Balance (Takeover/Overload Branch)**:
+   - *Task*: Authorizing a wire transfer refund of $12,500.00.
+   - *Gate*: `Complex Case` (High Urgency).
+   - *Resolution*: Amount exceeds standard agent credit limits ($10,000). A senior compliance officer manual takeover is triggered. Reviewer fatigue scores spike to `0.85` (overload alert). The orchestrator automatically throttles the human review queues and escalates the AI automation rate to `85%` (up from 50%) to immediately offload operator burden.
 
 ---
 
@@ -145,13 +162,13 @@ python main.py
 ├── agentic_system/
 │   ├── __init__.py
 │   ├── config.py       # Configuration and Azure OpenAI client setup
-│   ├── models.py       # Pydantic schemas: Exception triage, Error Records, State
-│   ├── prompts.py      # SRE Triage, Recovery Selection, and Learning prompts
-│   ├── agents.py       # Safety, Service, Triage, Recovery, and Learning agents
-│   └── graph.py        # pydantic-graph Orchestrator definitions & Node classes
-├── main.py             # Entrypoint driving the three showcase scenarios
+│   ├── models.py       # Pydantic schemas: Gating, Human Decisions, Feedback, State
+│   ├── prompts.py      # System prompts for gating, UI queue presentation, and learning loops
+│   ├── agents.py       # High-fidelity classes for Decision Gate, UI, Feedback, and Fatigue Agents
+│   └── graph.py        # complete pydantic-graph state machine wiring (22 nodes)
+├── main.py             # Entrypoint driving the four sequential showcases
 ├── README.md           # Premium SRE documentation
-├── about.md            # Exception Handling & Recovery pattern guide
+├── about.md            # Human-in-the-Loop pattern guide
 └── diagram.mmd         # Mermaid flowchart diagram
 ```
 
@@ -159,5 +176,6 @@ python main.py
 
 ## 🛡️ Robust Portability & Fallbacks
 
-- **High-Fidelity Mocks**: Automatically active when `AZURE_OPENAI_API_KEY` is not present, replicating identical self-healing telemetry and logs offline.
+- **High-Fidelity Mocks**: Automatically active when `AZURE_OPENAI_API_KEY` is not present in `.env`, replicating identical self-healing telemetry, structured logs, and fatigue spikes offline.
 - **Pydantic Validation Retries**: Wrapper agents use configured validation retries to guarantee 100% reliable structured tool-calling schema parsing across LLMs.
+- **Fatigue Monitoring**: Provides an active load-balancing safety system that prevents human reviewer burnout under queue overload conditions.

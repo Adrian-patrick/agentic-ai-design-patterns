@@ -1,64 +1,60 @@
 graph TD
-    Start[Try to Do Something] --> Wrap[Add Safety Checks]
+    Start[Agent Processing] --> Identify[Identify Decision Points]
     
-    Wrap --> Call[Make the Call]
-    Call --> External[Call External Service]
-    External --> Tool[Use a Tool]
-    External --> Service[Use a Service]
+    Identify --> Gates{Decision Gates}
     
-    Tool --> Result{Did It Work?}
-    Service --> Result
+    Gates --> Approve[Approval Required]
+    Gates --> Review[Review Needed]
+    Gates --> Edit[Editing Checkpoint]
+    Gates --> Complex[Complex Case]
     
-    Result -->|Success| Process[Use the Result]
-    Result -->|Error| Catch[Catch the Error]
+    Approve --> Queue[Add to Review Queue]
+    Review --> Queue
+    Edit --> Queue
+    Complex --> Queue
     
-    Catch --> WhatKind{What Kind of Error?}
+    Queue --> Batch[Batch Similar Items]
+    Batch --> Priority[Prioritize by Urgency]
     
-    WhatKind -->|Temporary| Retry[Try Again]
-    WhatKind -->|Permanent| Backup[Use Backup Plan]
-    WhatKind -->|Critical| Emergency[Emergency Response]
+    Priority --> UI[Present in UI]
+    UI --> Context[Show Full Context]
+    Context --> Diff[Display Differences]
+    Diff --> SLA[Show SLA Timer]
     
-    Retry --> Wait[Wait a Bit]
-    Wait --> AddTime[Wait Longer Each Time]
-    AddTime --> Count{How Many Tries?}
+    SLA --> Human{Human Decision}
     
-    Count -->|Less Than Max| Call
-    Count -->|Too Many| Backup
+    Human -->|Approve| Accept[Accept Agent Output]
+    Human -->|Deny| Reject[Reject with Reason]
+    Human -->|Edit| Modify[Human Edits Content]
+    Human -->|Takeover| Manual[Full Manual Control]
     
-    Backup --> Options{Backup Options}
+    Accept --> Continue[Continue Workflow]
+    Reject --> Learn1[Capture Rejection Pattern]
+    Modify --> Learn2[Record Edit Changes]
+    Manual --> Learn3[Log Takeover Reason]
     
-    Options --> Simple[Use Simpler Method]
-    Options --> Saved[Use Saved Data]
-    Options --> Default[Use Default Answer]
-    Options --> Human[Get Human Help]
+    Learn1 --> Update[Update Agent Training]
+    Learn2 --> Update
+    Learn3 --> Update
     
-    Simple --> Recover[Start Recovery]
-    Saved --> Recover
-    Default --> Recover
-    Human --> Recover
+    Update --> Improve[Improve Future Decisions]
     
-    Emergency --> SaveWork[Save Current Work]
-    SaveWork --> Alert[Alert the Team]
+    Continue --> Track[Track Decision Metrics]
+    Improve --> Track
     
-    Alert --> Safety{Is It Safe to Continue?}
+    Track --> Fatigue{Monitor Fatigue}
     
-    Safety -->|Over Limit| Stop[Emergency Stop]
-    Safety -->|OK| Resume[Pick Up Where We Left Off]
+    Fatigue -->|High| Reduce[Reduce Human Load]
+    Fatigue -->|Normal| Maintain[Maintain Current Flow]
     
-    Recover --> Record[Record What Happened]
-    Resume --> Record
-    Stop --> Record
+    Reduce --> Automate[Increase Automation]
+    Maintain --> Report[Generate Reports]
+    Automate --> Report
     
-    Record --> Track[Track Error Patterns]
-    Track --> Learn[Learn From Errors]
-    
-    Learn --> Improve[Improve for Next Time]
-    Process --> Success[Task Completed]
-    Improve --> End[Continue Working]
-    Success --> End
+    Report --> End[Process Complete]
 
     style Start fill:#e1f5fe
-    style WhatKind fill:#fff59d
-    style Options fill:#fff9c4
-    style Safety fill:#ffccbc
+    style Gates fill:#fff59d
+    style Human fill:#fff9c4
+    style Fatigue fill:#f3e5f5
     style End fill:#c8e6c9

@@ -1,286 +1,278 @@
 import asyncio
 from typing import Union
 from pydantic_graph import BaseNode, End, GraphRunContext, Graph
-from .agents import SafetyCheckAgent, ServiceCallAgent, TriageAgent, RecoveryAgent, LearningAgent
+from .agents import DecisionGateAgent, UIPresenterAgent, FeedbackLearningAgent, FatigueMonitorAgent
 from .models import (
     State,
     Dependencies,
-    ErrorRecord,
-    ExceptionCategory,
-    BackupOption,
-    SafetyVerdict,
+    GateType,
+    DecisionType,
+    QueueItem,
+    HumanDecision,
+    FeedbackLog,
 )
 
 class StartNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "SafetyChecksNode":
-        print("\n=== [Start Node] Initializing service request... ===")
+    ) -> "IdentifyDecisionPointsNode":
+        print("\n=== [Start Node] Beginning Agent Processing loop... ===")
         print(f"  Target Operation: '{ctx.state.query}'")
         print(f"  Active Scenario: {ctx.state.scenario.upper()}")
-        return SafetyChecksNode()
+        return IdentifyDecisionPointsNode()
 
-class SafetyChecksNode(BaseNode[State, Dependencies, str]):
+class IdentifyDecisionPointsNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "MakeCallNode":
-        print("\n=== [Safety Checks Node] Wrapping execution in safety envelopes... ===")
-        safety_agent = ctx.deps.safety_agent
-        passed = await safety_agent.check(ctx.state.query, ctx.state.scenario)
-        ctx.state.safety_checked = passed
-        print(f"  Prerequisites & input format checks: {'PASSED' if passed else 'FAILED'}")
-        return MakeCallNode()
+    ) -> "AddReviewQueueNode":
+        print("\n=== [Identify Decision Points Node] Scanning operation query for Decision Gates... ===")
+        gate = await ctx.deps.gate_agent.run(ctx.state.query, ctx.state.scenario)
+        ctx.state.gate_identified = gate
+        print(f"  Identified Decision Gate point: [{gate.value.upper()}]")
+        return AddReviewQueueNode()
 
-class MakeCallNode(BaseNode[State, Dependencies, str]):
+class AddReviewQueueNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> Union["ProcessResultNode", "CatchErrorNode"]:
-        ctx.state.call_attempts += 1
-        print(f"\n=== [Make Call Node] Invoking external tool/service (Attempt {ctx.state.call_attempts})... ===")
+    ) -> "UIPresentationNode":
+        print("\n=== [Add Review Queue Node] Routing task to Human Review Queue... ===")
+        print("  - Batching similar operations.")
+        print("  - Categorizing by task priority.")
+        return UIPresentationNode()
+
+class UIPresentationNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "HumanDecisionNode":
+        print("\n=== [UI Presentation Node] Formulating review item presentation context... ===")
+        item = await ctx.deps.ui_agent.run(ctx.state.query, ctx.state.scenario)
+        ctx.state.queue_item = item
         
-        service = ctx.deps.service_agent
-        try:
-            # Simulate real execution and let exceptions bubble up naturally
-            result = await service.run(ctx.state.scenario, ctx.state.call_attempts)
-            print(f"  [Service Success] Call returned raw result successfully.")
-            return ProcessResultNode(raw_result=result)
-        except Exception as e:
-            error_class_name = e.__class__.__name__
-            print(f"  [Service Failure] Caught raised exception: {error_class_name}: {e}")
-            ctx.state.last_error = f"{error_class_name}: {e}"
-            return CatchErrorNode()
+        print("\n[Human Operator Queue UI Card]")
+        print("------------------------------------------------------------")
+        print(f"  📌 Context: {item.context_summary}")
+        print(f"  ⚠️ Urgency Tier: {item.urgency.upper()}")
+        print(f"  ⏳ SLA response window: {item.sla_timer_sec}s countdown active")
+        print(f"  🤖 AI Original draft output:\n    '{item.original_agent_output}'")
+        print(f"  📄 Target Content Draft:\n    '{item.content_draft}'")
+        print("------------------------------------------------------------")
+        return HumanDecisionNode()
 
-class ProcessResultNode(BaseNode[State, Dependencies, str]):
-    raw_result: str
-
+class HumanDecisionNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "SuccessNode":
-        print("\n=== [Process Result Node] Deserializing and validating return payload... ===")
-        print(f"  Result content used: '{self.raw_result}'")
-        return SuccessNode()
-
-class SuccessNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "RecordNode":
-        print("\n=== [Success Node] Core task completed! Marking execution as SUCCESS. ===")
-        ctx.state.operation_outcome = "SUCCESS"
-        return RecordNode()
-
-class CatchErrorNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> Union["RetryNode", "FallbackNode", "EmergencyNode"]:
-        print("\n=== [Catch Error Node] Interrupt intercepted. Sending details to SRE Diagnosis Agent... ===")
-        triage_agent = ctx.deps.triage_agent
+    ) -> Union[
+        "AcceptAgentOutputNode",
+        "RejectWithReasonNode",
+        "HumanEditsContentNode",
+        "FullManualControlNode",
+    ]:
+        print("\n=== [Human Decision Node] Intercepting Operator keyboard/mouse actions... ===")
+        scenario = ctx.state.scenario
         
-        triage_result = await triage_agent.run(
-            query=ctx.state.query,
-            scenario=ctx.state.scenario,
-            error_msg=ctx.state.last_error or "Unknown Exception"
-        )
-        
-        print("\n[Diagnostic Triage Report]")
-        print(f"  - Severity: {triage_result.severity.upper()}")
-        print(f"  - Category: {triage_result.category.value.upper()}")
-        print(f"  - Reasoning: {triage_result.reasoning}")
-        print(f"  - Action Proposed: {triage_result.recommended_action}")
-        
-        if triage_result.category == ExceptionCategory.TEMPORARY:
-            return RetryNode()
-        elif triage_result.category == ExceptionCategory.PERMANENT:
-            return FallbackNode()
-        else: # CRITICAL
-            return EmergencyNode()
-
-class RetryNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> Union["MakeCallNode", "FallbackNode"]:
-        print("\n=== [Retry Node] Calculating retry budget and backoff parameters... ===")
-        
-        if ctx.state.call_attempts <= ctx.state.max_retries:
-            # Exponential backoff wait time (simulated)
-            wait_sec = float(2 ** ctx.state.call_attempts)
-            ctx.state.current_wait_sec = wait_sec
-            
-            print(f"  - Active Retries: {ctx.state.call_attempts}/{ctx.state.max_retries}")
-            print(f"  - Backoff Jitter: Waiting {wait_sec} seconds before next try...")
-            
-            # Simulated sleep
-            await asyncio.sleep(0.1)  # small sleep for fast showcase runs
-            
-            record = ErrorRecord(
-                attempt=ctx.state.call_attempts,
-                error_msg=ctx.state.last_error or "Temporary error",
-                category="Temporary",
-                action_taken=f"Backoff {wait_sec}s and retry connection."
+        # Simulate high-fidelity human decisions based on scenario
+        if scenario == "approve":
+            decision = HumanDecision(
+                decision=DecisionType.APPROVE,
+                reviewer_feedback="Original draft meets corporate SRE standards. Approved."
             )
-            ctx.state.error_history.append(record)
-            return MakeCallNode()
-        else:
-            print("  [Limit Exceeded] Maximum retries reached. Out of retry budget.")
-            record = ErrorRecord(
-                attempt=ctx.state.call_attempts,
-                error_msg=ctx.state.last_error or "Temporary error",
-                category="Temporary",
-                action_taken="Max retries reached. Escalate to Fallback Plan."
-            )
-            ctx.state.error_history.append(record)
-            return FallbackNode()
-
-class FallbackNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "StartRecoveryNode":
-        print("\n=== [Fallback Node] Activating Graceful Degradation Protocol... ===")
-        recovery_agent = ctx.deps.recovery_agent
-        
-        backup_opt = await recovery_agent.select_backup(
-            query=ctx.state.query,
-            error_msg=ctx.state.last_error or "Permanent error"
-        )
-        
-        ctx.state.backup_plan_selected = backup_opt
-        print(f"  Selected Backup Strategy: [{backup_opt.value.upper()}]")
-        
-        record = ErrorRecord(
-            attempt=ctx.state.call_attempts,
-            error_msg=ctx.state.last_error or "Permanent error",
-            category="Permanent",
-            action_taken=f"Gracefully degraded to Backup: {backup_opt.value}"
-        )
-        ctx.state.error_history.append(record)
-        return StartRecoveryNode()
-
-class StartRecoveryNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "RecordNode":
-        print("\n=== [Start Recovery Node] Engaging backup data and endpoints... ===")
-        backup = ctx.state.backup_plan_selected
-        
-        if backup == BackupOption.SIMPLE_METHOD:
-            print("  [Recovery Action] Switched to simpler, lightweight CPU execution path. Success.")
-        elif backup == BackupOption.SAVED_DATA:
-            print("  [Recovery Action] Fetched read-only database replica from local cache filesystem. Integrity restored.")
-        elif backup == BackupOption.DEFAULT_ANSWER:
-            print("  [Recovery Action] Serving default generic safe JSON response. Integrity restored.")
-        else:
-            print("  [Recovery Action] Paging human operator on-call via pagerduty. Handed off.")
+            ctx.state.human_decision = decision
+            print("  [Human Decision Triggered] APPROVED: Content accepted.")
+            return AcceptAgentOutputNode()
             
-        ctx.state.operation_outcome = "RECOVERED"
-        return RecordNode()
+        elif scenario == "deny":
+            decision = HumanDecision(
+                decision=DecisionType.DENY,
+                reviewer_feedback="Resume screening error. Bob has Python and Go skills but the Rust Team requires senior-level native Rust experience."
+            )
+            ctx.state.human_decision = decision
+            print("  [Human Decision Triggered] DENIED: Content rejected.")
+            return RejectWithReasonNode()
+            
+        elif scenario == "edit":
+            decision = HumanDecision(
+                decision=DecisionType.EDIT,
+                reviewer_feedback="French: Bonjour le monde",
+                edited_content="French: Bonjour tout le monde"
+            )
+            ctx.state.human_decision = decision
+            print("  [Human Decision Triggered] EDIT: Content polished manually.")
+            return HumanEditsContentNode()
+            
+        else: # takeover_fatigue
+            decision = HumanDecision(
+                decision=DecisionType.TAKEOVER,
+                takeover_reason="Refund transfer amount ($12,500) exceeds default agent credit limit ($10,000). Direct senior compliance officer manual takeover initiated."
+            )
+            ctx.state.human_decision = decision
+            print("  [Human Decision Triggered] TAKEOVER: Manual operator control engaged.")
+            return FullManualControlNode()
 
-class EmergencyNode(BaseNode[State, Dependencies, str]):
+class AcceptAgentOutputNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> Union["ResumeNode", "StopNode"]:
-        print("\n=== [Emergency Node] FATAL ALARM! Activating Emergency Operations! ===")
+    ) -> "ContinueWorkflowNode":
+        print("\n=== [Accept Agent Output Node] Accepting agent draft... ===")
+        print("  Proceeding to execute downstream publication.")
+        return ContinueWorkflowNode()
+
+class RejectWithReasonNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "CaptureRejectionPatternNode":
+        print("\n=== [Reject With Reason Node] Rejecting content... ===")
+        print(f"  Reason logged: '{ctx.state.human_decision.reviewer_feedback}'")
+        return CaptureRejectionPatternNode()
+
+class HumanEditsContentNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "RecordEditChangesNode":
+        print("\n=== [Human Edits Content Node] Merging human edits into draft workspace... ===")
+        print(f"  Original: '{ctx.state.human_decision.reviewer_feedback}'")
+        print(f"  Modified: '{ctx.state.human_decision.edited_content}'")
+        return RecordEditChangesNode()
+
+class FullManualControlNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "LogTakeoverReasonNode":
+        print("\n=== [Full Manual Control Node] AI Agent safely suspended. ===")
+        print(f"  Takeover Reason: '{ctx.state.human_decision.takeover_reason}'")
+        return LogTakeoverReasonNode()
+
+class ContinueWorkflowNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "TrackDecisionMetricsNode":
+        print("\n=== [Continue Workflow Node] Resuming main pipeline execution... ===")
+        return TrackDecisionMetricsNode()
+
+class CaptureRejectionPatternNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "UpdateAgentTrainingNode":
+        print("\n=== [Capture Rejection Pattern Node] Recording negative feedback log... ===")
+        return UpdateAgentTrainingNode()
+
+class RecordEditChangesNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "UpdateAgentTrainingNode":
+        print("\n=== [Record Edit Changes Node] Recording structural edits differences... ===")
+        return UpdateAgentTrainingNode()
+
+class LogTakeoverReasonNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "UpdateAgentTrainingNode":
+        print("\n=== [Log Takeover Reason Node] Recording manual takeover override parameters... ===")
+        return UpdateAgentTrainingNode()
+
+class UpdateAgentTrainingNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "ImproveFutureDecisionsNode":
+        print("\n=== [Update Agent Training Node] Feeding corrections to SRE Learning loop... ===")
+        feedback_agent = ctx.deps.feedback_agent
+        log = await feedback_agent.run(ctx.state.human_decision)
+        ctx.state.feedback_log = log
+        return ImproveFutureDecisionsNode()
+
+class ImproveFutureDecisionsNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "TrackDecisionMetricsNode":
+        print("\n=== [Improve Future Decisions Node] Guidelines updated in agent context! ===")
+        log = ctx.state.feedback_log
+        print(f"  * Learning insights: {log.learning_points}")
+        print(f"  * Guidelines constraint added: '{log.guidelines_updated}'")
+        ctx.state.learned_patterns = f"Learned Constraint: {log.guidelines_updated}\nFeedback: {log.learning_points}"
+        return TrackDecisionMetricsNode()
+
+class TrackDecisionMetricsNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "MonitorFatigueNode":
+        print("\n=== [Track Decision Metrics Node] Updating decision frequency databases... ===")
+        return MonitorFatigueNode()
+
+class MonitorFatigueNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> Union["ReduceHumanLoadNode", "MaintainCurrentFlowNode"]:
+        print("\n=== [Monitor Fatigue Node] Auditing operator work fatigue thresholds... ===")
+        score, action = await ctx.deps.fatigue_agent.evaluate(ctx.state.scenario)
+        ctx.state.fatigue_score = score
+        ctx.state.load_action = action
         
-        # Save Work
-        ctx.state.emergency_saved = True
-        print("  [Emergency Save] Serializing transaction state to encrypted fallback file: C:/temp/active_state.json... SUCCESS.")
-        
-        # Alert Team
-        ctx.state.emergency_alerted = True
-        print("  [Emergency Alert] Sounding pager/Siren! Dispatching webhook alert to SRE team on slack channel #ops-alerts... SENT.")
-        
-        # Run safety evaluation
-        recovery_agent = ctx.deps.recovery_agent
-        verdict = await recovery_agent.evaluate_safety(ctx.state.error_history)
-        ctx.state.safety_verdict = verdict
-        
-        print("\n[Safety Review Assessment]")
-        print(f"  - Continue Allowed?: {'YES' if verdict.is_safe else 'NO'}")
-        print(f"  - Reasoning: {verdict.reasoning}")
-        print(f"  - Next Structural Move: {verdict.next_action.upper()}")
-        
-        record = ErrorRecord(
-            attempt=ctx.state.call_attempts,
-            error_msg=ctx.state.last_error or "Critical error",
-            category="Critical",
-            action_taken=f"Emergency state saved. Team alerted. Safety verdict next action: {verdict.next_action}"
-        )
-        ctx.state.error_history.append(record)
-        
-        if verdict.next_action == "RESUME":
-            return ResumeNode()
+        if action == "REDUCE":
+            return ReduceHumanLoadNode()
         else:
-            return StopNode()
+            return MaintainCurrentFlowNode()
 
-class ResumeNode(BaseNode[State, Dependencies, str]):
+class ReduceHumanLoadNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "RecordNode":
-        print("\n=== [Resume Node] Attempting self-healing reconstruction from state snapshot... ===")
-        print("  Restored operation from previous valid checkpoint. Continuing execution...")
-        return RecordNode()
+    ) -> "IncreaseAutomationNode":
+        print("\n=== [Reduce Human Load Node] HIGH WORKLOAD FATIGUE DETECTED! ===")
+        print("  - Throttling human review queue rates.")
+        print("  - Batching items in larger groups to lower notification count.")
+        return IncreaseAutomationNode()
 
-class StopNode(BaseNode[State, Dependencies, str]):
+class IncreaseAutomationNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "RecordNode":
-        print("\n=== [Stop Node] Commencing Safe Shutdown protocols... ===")
-        print("  - Disconnecting read-write socket listeners.")
-        print("  - Setting PostgreSQL database into READ-ONLY protection-mode.")
-        print("  - Releasing resources and exiting gracefully.")
-        ctx.state.operation_outcome = "EMERGENCY_STOP"
-        return RecordNode()
+    ) -> "GenerateReportsNode":
+        print("\n=== [Increase Automation Node] Elevating AI confidence thresholds... ===")
+        ctx.state.automation_level = 0.85
+        print(f"  AI Automation Rate elevated: 50% ➡️ {ctx.state.automation_level * 100:.0f}% (OFFLOADING HUMAN)")
+        return GenerateReportsNode()
 
-class RecordNode(BaseNode[State, Dependencies, str]):
+class MaintainCurrentFlowNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "GenerateReportsNode":
+        print("\n=== [Maintain Current Flow Node] Load within safe margins. ===")
+        print(f"  Maintained baseline AI Automation Rate: {ctx.state.automation_level * 100:.0f}%")
+        return GenerateReportsNode()
+
+class GenerateReportsNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
     ) -> "EndNode":
-        print("\n=== [Record Node] Recording event log & feeding continuous learning loop... ===")
-        learning_agent = ctx.deps.learning_agent
-        
-        patterns = await learning_agent.run(
-            error_history=ctx.state.error_history,
-            outcome=ctx.state.operation_outcome
-        )
-        ctx.state.learned_patterns = patterns
-        print("  Learning synthesized. Root causes traced, system updates queued for reinforcement.")
+        print("\n=== [Generate Reports Node] Consolidating HITL operational audit trails... ===")
         return EndNode()
 
 class EndNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
     ) -> End[str]:
-        print("\n=== [End Node] Finalizing Execution & Generating Report... ===")
+        print("\n=== [End Node] Generating Final Workflow Complete Report... ===")
         
-        outcome_color_map = {
-            "SUCCESS": "SUCCESS (🟢 GREEN)",
-            "RECOVERED": "RECOVERED (🟡 YELLOW - GRACEFUL DEGRADATION)",
-            "EMERGENCY_STOP": "EMERGENCY STOPPED (🔴 RED - SAFE PROTECTED SHUTDOWN)"
-        }
+        gate_str = ctx.state.gate_identified.value if ctx.state.gate_identified else "N/A"
+        decision_str = ctx.state.human_decision.decision.value if ctx.state.human_decision else "N/A"
+        feedback_str = ctx.state.human_decision.reviewer_feedback or "N/A" if ctx.state.human_decision else "N/A"
         
-        outcome_desc = outcome_color_map.get(ctx.state.operation_outcome, ctx.state.operation_outcome)
-        
-        error_summary = []
-        for i, rec in enumerate(ctx.state.error_history, 1):
-            error_summary.append(
-                f"  Attempt {rec.attempt} | Class: {rec.category} | Reason: {rec.error_msg}\n"
-                f"    -> Resolution Action taken: {rec.action_taken}"
+        learning_section = ""
+        if ctx.state.feedback_log:
+            learning_section = (
+                f"\nContinuous Training Feedback Log:\n"
+                f"  * Insights Gained: {ctx.state.feedback_log.learning_points}\n"
+                f"  * System Prompt Constraints Added: '{ctx.state.feedback_log.guidelines_updated}'\n"
             )
             
-        history_text = "\n".join(error_summary) if error_summary else "  None. Completed on first attempt."
-        
         report = (
             "==============================================================\n"
-            "            RELIABILITY SYSTEM EXECUTION REPORT\n"
+            "            HUMAN-IN-THE-LOOP (HITL) WORKFLOW REPORT\n"
             "==============================================================\n"
-            f"Operation Description: '{ctx.state.query}'\n"
-            f"Final System Outcome Status: {outcome_desc}\n"
-            f"Total Service Invocations: {ctx.state.call_attempts}\n"
-            f"Pre-checks Verified?: {'Yes' if ctx.state.safety_checked else 'No'}\n"
-            f"Emergency State Saved?: {'Yes' if ctx.state.emergency_saved else 'No'}\n"
-            f"On-Call Engineers Paged?: {'Yes' if ctx.state.emergency_alerted else 'No'}\n"
-            "\nEncountered Error History log:\n"
-            f"{history_text}\n"
-            "\nTracked Error Patterns & Continuous Learning Insights:\n"
-            f"{ctx.state.learned_patterns}\n"
+            f"Objective Task Query: '{ctx.state.query}'\n"
+            f"Active Decision Gate: {gate_str}\n"
+            f"Human Operator Action: {decision_str}\n"
+            f"Operator Feedback/Notes: '{feedback_str}'\n"
+            f"Reviewer Fatigue Index: {ctx.state.fatigue_score:.2f} ({ctx.state.load_action})\n"
+            f"Final AI System Automation Rate: {ctx.state.automation_level * 100:.0f}%\n"
+            f"{learning_section}"
             "=============================================================="
         )
         ctx.state.final_report = report
@@ -291,18 +283,26 @@ def build_graph() -> Graph:
     return Graph(
         nodes=[
             StartNode,
-            SafetyChecksNode,
-            MakeCallNode,
-            ProcessResultNode,
-            SuccessNode,
-            CatchErrorNode,
-            RetryNode,
-            FallbackNode,
-            StartRecoveryNode,
-            EmergencyNode,
-            ResumeNode,
-            StopNode,
-            RecordNode,
+            IdentifyDecisionPointsNode,
+            AddReviewQueueNode,
+            UIPresentationNode,
+            HumanDecisionNode,
+            AcceptAgentOutputNode,
+            RejectWithReasonNode,
+            HumanEditsContentNode,
+            FullManualControlNode,
+            ContinueWorkflowNode,
+            CaptureRejectionPatternNode,
+            RecordEditChangesNode,
+            LogTakeoverReasonNode,
+            UpdateAgentTrainingNode,
+            ImproveFutureDecisionsNode,
+            TrackDecisionMetricsNode,
+            MonitorFatigueNode,
+            ReduceHumanLoadNode,
+            IncreaseAutomationNode,
+            MaintainCurrentFlowNode,
+            GenerateReportsNode,
             EndNode,
         ],
         state_type=State,
@@ -311,14 +311,13 @@ def build_graph() -> Graph:
 
 def build_deps() -> Dependencies:
     return Dependencies(
-        safety_agent=SafetyCheckAgent(),
-        service_agent=ServiceCallAgent(),
-        triage_agent=TriageAgent(),
-        recovery_agent=RecoveryAgent(),
-        learning_agent=LearningAgent(),
+        gate_agent=DecisionGateAgent(),
+        ui_agent=UIPresenterAgent(),
+        feedback_agent=FeedbackLearningAgent(),
+        fatigue_agent=FatigueMonitorAgent(),
     )
 
-async def run_graph(query: str, scenario: str = "transient_success") -> tuple[str, State]:
+async def run_graph(query: str, scenario: str = "approve") -> tuple[str, State]:
     graph = build_graph()
     deps = build_deps()
     state = State(query=query, scenario=scenario)
