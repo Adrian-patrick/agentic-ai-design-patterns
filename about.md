@@ -1,88 +1,82 @@
-# Inter-Agent Communication (A2A) Pattern
+# Resource-Aware Optimization Pattern
 
 ## When to Use
 
-- **Complex workflows**: Tasks requiring multiple specialized agents
-- **Modular systems**: Building composable agent architectures
-- **Distributed processing**: Agents running in different locations
-- **Scalable architectures**: Systems that need to grow
-- **Collaborative tasks**: Agents working together on problems
-- **Service-oriented design**: Agents as microservices
+- **Cost-sensitive operations**: When managing API or compute costs
+- **High-volume processing**: Optimizing large-scale operations
+- **Variable workloads**: Different tasks need different resources
+- **Budget constraints**: Operating within financial limits
+- **Performance requirements**: Balancing speed vs cost
+- **Multi-tenant systems**: Fair resource allocation across users
 
 ## Where It Fits
 
-- **Enterprise automation**: Coordinating business process agents
-- **Research systems**: Agents collaborating on analysis
-- **Content production**: Pipeline of content creation agents
-- **Trading systems**: Agents coordinating financial decisions
-- **Smart city systems**: IoT and service agents communicating
+- **SaaS platforms**: Managing per-customer resource usage
+- **Batch processing**: Optimizing large data processing jobs
+- **Real-time systems**: Balancing latency and cost
+- **Development environments**: Using cheaper models for testing
+- **Production systems**: Optimizing operational costs
 
 ## Pros
 
-- **Modularity**: Clear separation of agent responsibilities
-- **Scalability**: Easy to add new agents to the system
-- **Flexibility**: Different communication patterns available
-- **Fault isolation**: Agent failures don't crash system
-- **Reusability**: Agents can be reused in different workflows
-- **Debugging support**: Message tracing aids troubleshooting
-- **Parallel processing**: Agents can work simultaneously
+- **Cost reduction**: Significant savings on API and compute costs
+- **Performance optimization**: Right-sized resources for each task
+- **Scalability**: Efficient resource use enables growth
+- **Flexibility**: Dynamic adjustment to workload changes
+- **Budget control**: Predictable operational costs
+- **Quality preservation**: Maintains output quality where needed
+- **Automatic optimization**: Self-tuning based on patterns
 
 ## Cons
 
-- **Complexity overhead**: Communication protocols add complexity
-- **Latency accumulation**: Message passing adds delays
-- **Coordination challenges**: Managing agent interactions
-- **Debugging difficulty**: Tracing distributed conversations
-- **State management**: Maintaining consistency across agents
-- **Network dependencies**: Vulnerable to communication failures
-- **Security concerns**: Inter-agent authentication needed
+- **Complexity increase**: Resource management adds overhead
+- **Quality variations**: Different models produce different results
+- **Routing overhead**: Classification step adds latency
+- **Monitoring requirements**: Need comprehensive tracking
+- **Tuning challenges**: Finding optimal thresholds takes time
+- **Cache management**: Maintaining cache coherency
+- **User experience**: Inconsistent response times
 
 ## Real-World Examples
 
-1. **E-commerce Order Processing**:
-   - Inventory Agent checks stock availability
-   - Pricing Agent calculates total costs
-   - Payment Agent processes transactions
-   - Shipping Agent arranges delivery
-   - Notification Agent updates customer
-   - Orchestrator coordinates entire flow
+1. **Customer Support Platform**:
+   - Simple FAQs use lightweight models
+   - Complex issues use advanced models
+   - Cache common question responses
+   - Prioritize premium customers
+   - Track cost per ticket resolution
 
-2. **News Production Pipeline**:
-   - Crawler Agent gathers news sources
-   - Fact-Check Agent verifies information
-   - Writer Agent creates articles
-   - Editor Agent reviews content
-   - Publisher Agent posts to CMS
-   - Analytics Agent tracks performance
+2. **Content Generation Service**:
+   - Short social posts use fast models
+   - Long articles use quality models
+   - Reuse templates for common requests
+   - Batch similar requests together
+   - Monitor cost per content piece
 
-3. **Financial Analysis Platform**:
-   - Data Agent collects market information
-   - Technical Agent performs chart analysis
-   - Fundamental Agent analyzes financials
-   - Risk Agent assesses portfolio exposure
-   - Report Agent generates recommendations
-   - Compliance Agent ensures regulations
+3. **Code Assistant Tool**:
+   - Syntax fixes use simple models
+   - Architecture design uses advanced models
+   - Cache common code patterns
+   - Prioritize based on project importance
+   - Track cost per developer action
 
-4. **Smart Manufacturing System**:
-   - Sensor Agents monitor equipment
-   - Quality Agents check production
-   - Maintenance Agents schedule repairs
-   - Inventory Agents manage supplies
-   - Planning Agents optimize schedules
-   - Control Agent coordinates operations
+4. **Translation Platform**:
+   - Common languages use basic models
+   - Rare languages use specialized models
+   - Cache frequent translations
+   - Batch document processing
+   - Optimize cost per word translated
 
-5. **Healthcare Coordination**:
-   - Triage Agent assesses symptoms
-   - Diagnostic Agent suggests tests
-   - Specialist Agents provide expertise
-   - Treatment Agent recommends therapy
-   - Pharmacy Agent manages medications
-   - Scheduler Agent books appointments
+5. **Data Analysis System**:
+   - Simple aggregations use basic compute
+   - Complex ML uses premium resources
+   - Cache intermediate results
+   - Schedule heavy jobs off-peak
+   - Monitor cost per analysis
 
-6. **Research Collaboration Platform**:
-   - Literature Agent searches papers
-   - Data Agent manages datasets
-   - Analysis Agent runs experiments
-   - Visualization Agent creates charts
-   - Writing Agent drafts reports
-   - Review Agent checks quality
+6. **Educational Platform**:
+   - Basic Q&A uses lightweight models
+   - Complex tutoring uses advanced models
+   - Cache common explanations
+   - Allocate resources by subscription tier
+   - Track cost per student interaction

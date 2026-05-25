@@ -1,61 +1,71 @@
 graph TD
-    Start[Multiple AI Agents Need to Talk] --> Choose{How Should They Communicate?}
+    Start[Task Request] --> Analyze[Analyze Complexity]
     
-    Choose -->|One Boss| Manager[One Agent Manages Others]
-    Choose -->|Everyone Equal| Direct[Agents Talk Directly]
-    Choose -->|Post Office| Mailbox[Central Message System]
+    Analyze --> Budget{Set Budgets}
     
-    Manager --> Setup[Set Up Communication Rules]
-    Direct --> Setup
-    Mailbox --> Setup
+    Budget --> Token[Token Limits]
+    Budget --> Time[Time Constraints]
+    Budget --> Cost[Money Budget]
     
-    Setup --> Rules[Message Rules]
-    Rules --> Track[Tracking Number for Each Message]
-    Rules --> Expire[Messages Expire After Time Limit]
-    Rules --> Important[Mark Important Messages]
+    Token --> Router[Router Agent]
+    Time --> Router
+    Cost --> Router
     
-    Track --> Check{Check Who Can Talk}
-    Expire --> Check
-    Important --> Check
+    Router --> Classify{Classify Complexity}
     
-    Check --> Verify[Verify Agent Identity]
-    Verify --> Permission[Check What They Can Do]
-    Permission --> Allow[Allow Communication]
+    Classify -->|Simple| Cheap[Use Small Model]
+    Classify -->|Medium| Standard[Use Standard Model]
+    Classify -->|Complex| Premium[Use Advanced Model]
+    Classify -->|Unknown| Test[Run Quick Test]
     
-    Allow --> Send[Send Message]
-    Send --> Deliver[Deliver to Right Agent]
+    Test --> Confidence{Check Confidence}
     
-    Deliver --> Receive[Agent Gets Message]
-    Receive --> Process[Process Message]
+    Confidence -->|Low| Escalate[Escalate to Better Model]
+    Confidence -->|High| Proceed[Continue with Current]
     
-    Process --> Reply{Need to Reply?}
+    Cheap --> Execute[Execute Task]
+    Standard --> Execute
+    Premium --> Execute
+    Escalate --> Execute
+    Proceed --> Execute
     
-    Reply -->|Yes| Answer[Send Answer Back]
-    Reply -->|No| Log[Record Message Received]
+    Execute --> Monitor[Monitor Resources]
     
-    Answer --> Watch[Monitor Conversation]
-    Log --> Watch
+    Monitor --> Track{Track Usage}
     
-    Watch --> Problems{Any Problems?}
+    Track --> Tokens[Token Count]
+    Track --> Latency[Response Time]
+    Track --> Costs[API Costs]
     
-    Problems -->|Endless Loop| Stop[Stop the Loop]
-    Problems -->|Stuck| Fix[Unstick the Agents]
-    Problems -->|Too Long| Timeout[Cancel Old Messages]
-    Problems -->|All Good| Continue[Keep Going]
+    Tokens --> Check{Within Limits?}
+    Latency --> Check
+    Costs --> Check
     
-    Stop --> Alert[Alert Human]
-    Fix --> Alert
-    Timeout --> Alert
-    Continue --> Record[Save Conversation History]
+    Check -->|Yes| Continue[Continue Processing]
+    Check -->|No| Optimize[Optimization Needed]
     
-    Alert --> Recover[Fix the Problem]
-    Record --> Report[Create Activity Report]
+    Optimize --> Prune[Prune Context]
+    Optimize --> Cache[Use Cached Results]
+    Optimize --> Downgrade[Switch to Cheaper Model]
     
-    Recover --> End[Communication Complete]
-    Report --> End
+    Prune --> Retry[Retry Operation]
+    Cache --> Retry
+    Downgrade --> Retry
+    
+    Continue --> Complete[Task Complete]
+    Retry --> Monitor
+    
+    Complete --> Measure[Measure Quality/Cost]
+    Measure --> Delta[Calculate Delta]
+    
+    Delta --> Tune[Tune Thresholds]
+    Tune --> Learn[Update Router Logic]
+    
+    Learn --> Report[Generate Report]
+    Report --> End[Optimized Execution]
 
     style Start fill:#e1f5fe
-    style Choose fill:#fff59d
+    style Classify fill:#fff59d
     style Check fill:#fff9c4
-    style Problems fill:#f3e5f5
+    style Delta fill:#f3e5f5
     style End fill:#c8e6c9
