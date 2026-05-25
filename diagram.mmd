@@ -1,60 +1,67 @@
 graph TD
-    Start[Agent Processing] --> Identify[Identify Decision Points]
+    Start[Documents to Search] --> Read[Read Documents]
     
-    Identify --> Gates{Decision Gates}
+    Read --> Parse[Extract the Text]
+    Parse --> GetInfo[Get Document Info]
+    GetInfo --> AddTags[Add Tags and Labels]
     
-    Gates --> Approve[Approval Required]
-    Gates --> Review[Review Needed]
-    Gates --> Edit[Editing Checkpoint]
-    Gates --> Complex[Complex Case]
+    AddTags --> Split{How to Split Text?}
     
-    Approve --> Queue[Add to Review Queue]
-    Review --> Queue
-    Edit --> Queue
-    Complex --> Queue
+    Split --> Fixed[Equal Size Chunks]
+    Split --> Smart[Natural Breaks]
+    Split --> Context[Keep Related Parts Together]
     
-    Queue --> Batch[Batch Similar Items]
-    Batch --> Priority[Prioritize by Urgency]
+    Fixed --> Process[Process Each Chunk]
+    Smart --> Process
+    Context --> Process
     
-    Priority --> UI[Present in UI]
-    UI --> Context[Show Full Context]
-    Context --> Diff[Display Differences]
-    Diff --> SLA[Show SLA Timer]
+    Process --> Convert[Convert to Searchable Format]
+    Convert --> Store[Store in Search Database]
     
-    SLA --> Human{Human Decision}
+    Store --> Ready[System Ready to Search]
     
-    Human -->|Approve| Accept[Accept Agent Output]
-    Human -->|Deny| Reject[Reject with Reason]
-    Human -->|Edit| Modify[Human Edits Content]
-    Human -->|Takeover| Manual[Full Manual Control]
+    Ready --> Question[User Asks Question]
+    Question --> Improve[Make Question Better]
     
-    Accept --> Continue[Continue Workflow]
-    Reject --> Learn1[Capture Rejection Pattern]
-    Modify --> Learn2[Record Edit Changes]
-    Manual --> Learn3[Log Takeover Reason]
+    Improve --> Expand[Add Related Words]
+    Expand --> Search[Search Database]
     
-    Learn1 --> Update[Update Agent Training]
-    Learn2 --> Update
-    Learn3 --> Update
+    Search --> Find[Find Matching Chunks]
+    Find --> Filter[Remove Irrelevant Ones]
     
-    Update --> Improve[Improve Future Decisions]
+    Filter --> Rank{Rank by Relevance}
     
-    Continue --> Track[Track Decision Metrics]
-    Improve --> Track
+    Rank --> Score[Give Each a Score]
+    Score --> Sort[Sort Best to Worst]
+    Sort --> Pick[Pick Top Matches]
     
-    Track --> Fatigue{Monitor Fatigue}
+    Pick --> Verify[Check Sources are Good]
+    Verify --> Use[Use Sources for Answer]
     
-    Fatigue -->|High| Reduce[Reduce Human Load]
-    Fatigue -->|Normal| Maintain[Maintain Current Flow]
+    Use --> Generate[Create Answer]
+    Generate --> Cite[Add Source References]
     
-    Reduce --> Automate[Increase Automation]
-    Maintain --> Report[Generate Reports]
-    Automate --> Report
+    Cite --> Quality{Is Answer Good?}
     
-    Report --> End[Process Complete]
+    Quality -->|Yes| Deliver[Give Answer to User]
+    Quality -->|No| Redo[Try Different Search]
+    
+    Redo --> Adjust[Change Search Settings]
+    Adjust --> Search
+    
+    Deliver --> Track[Track How Well It Worked]
+    Track --> Measure[Measure Success]
+    
+    Measure --> Accuracy[How Accurate?]
+    Measure --> Coverage[How Complete?]
+    
+    Accuracy --> Improve_System[Make System Better]
+    Coverage --> Improve_System
+    
+    Improve_System --> End[Search Complete]
 
     style Start fill:#e1f5fe
-    style Gates fill:#fff59d
-    style Human fill:#fff9c4
-    style Fatigue fill:#f3e5f5
+    style Split fill:#fff59d
+    style Rank fill:#fff9c4
+    style Quality fill:#f3e5f5
     style End fill:#c8e6c9

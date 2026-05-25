@@ -1,75 +1,82 @@
-# Human-in-the-Loop (HITL) Pattern 👥🤖
+# Knowledge Retrieval (RAG) Pattern 📖🔍
 
-A robust, premium agentic orchestrator implementing the **Human-in-the-Loop (HITL) Design Pattern** powered by `pydantic-ai` and `pydantic-graph`. 
+A robust, premium agentic orchestrator implementing the **Knowledge Retrieval (RAG) Design Pattern** powered by `pydantic-ai` and `pydantic-graph`.
 
-The system governs complex multi-agent workflows through error-resilient structures: conducting operations, routing decisions to specific gates (Approve, Review, Edit, Complex), batching and prioritizing human operator queues, rendering modern developer-oriented UI summaries with SLAs, intercepting human actions (Accept, Reject, Edit, Takeover), capturing continuous training feedback to automatically reinforce system prompts, and dynamically balancing reviewer fatigue by automatically throttling load and adjusting AI automation thresholds.
+The system governs complex multi-agent search and document retrieval workflows: loading document collections, segmenting content into optimized chunks, indexing them into standard vector search indexes, expanding user questions semantically via query expansion, matching and ranking chunks with deterministic Python thresholding, synthesizing factual answers with precise inline citations, and executing a dynamic self-healing quality validation loop (re-querying and automatically elevating search parameters if initial outputs are deemed incomplete or low confidence).
 
 ---
 
 ## 🌟 Modern Design Pattern Architecture
 
-Rather than operating entirely autonomously or requiring cumbersome manual intervention for every step, this system acts as a smart, load-balanced coordinator between agent autonomy and human oversight:
+Rather than operating entirely in isolation or risking costly hallucinations, this system acts as a factual coordinator between user queries and index documentation:
 
 ```mermaid
 graph TD
-    Start[Agent Processing] --> Identify[Identify Decision Points]
+    Start[Documents to Search] --> Read[Read Documents]
     
-    Identify --> Gates{Decision Gates}
+    Read --> Parse[Extract the Text]
+    Parse --> GetInfo[Get Document Info]
+    GetInfo --> AddTags[Add Tags and Labels]
     
-    Gates --> Approve[Approval Required]
-    Gates --> Review[Review Needed]
-    Gates --> Edit[Editing Checkpoint]
-    Gates --> Complex[Complex Case]
+    AddTags --> Split{How to Split Text?}
     
-    Approve --> Queue[Add to Review Queue]
-    Review --> Queue
-    Edit --> Queue
-    Complex --> Queue
+    Split --> Fixed[Equal Size Chunks]
+    Split --> Smart[Natural Breaks]
+    Split --> Context[Keep Related Parts Together]
     
-    Queue --> Batch[Batch Similar Items]
-    Batch --> Priority[Prioritize by Urgency]
+    Fixed --> Process[Process Each Chunk]
+    Smart --> Process
+    Context --> Process
     
-    Priority --> UI[Present in UI]
-    UI --> Context[Show Full Context]
-    Context --> Diff[Display Differences]
-    Diff --> SLA[Show SLA Timer]
+    Process --> Convert[Convert to Searchable Format]
+    Convert --> Store[Store in Search Database]
     
-    SLA --> Human{Human Decision}
+    Store --> Ready[System Ready to Search]
     
-    Human -->|Approve| Accept[Accept Agent Output]
-    Human -->|Deny| Reject[Reject with Reason]
-    Human -->|Edit| Modify[Human Edits Content]
-    Human -->|Takeover| Manual[Full Manual Control]
+    Ready --> Question[User Asks Question]
+    Question --> Improve[Make Question Better]
     
-    Accept --> Continue[Continue Workflow]
-    Reject --> Learn1[Capture Rejection Pattern]
-    Modify --> Learn2[Record Edit Changes]
-    Manual --> Learn3[Log Takeover Reason]
+    Improve --> Expand[Add Related Words]
+    Expand --> Search[Search Database]
     
-    Learn1 --> Update[Update Agent Training]
-    Learn2 --> Update
-    Learn3 --> Update
+    Search --> Find[Find Matching Chunks]
+    Find --> Filter[Remove Irrelevant Ones]
     
-    Update --> Improve[Improve Future Decisions]
+    Filter --> Rank{Rank by Relevance}
     
-    Continue --> Track[Track Decision Metrics]
-    Improve --> Track
+    Rank --> Score[Give Each a Score]
+    Score --> Sort[Sort Best to Worst]
+    Sort --> Pick[Pick Top Matches]
     
-    Track --> Fatigue{Monitor Fatigue}
+    Pick --> Verify[Check Sources are Good]
+    Verify --> Use[Use Sources for Answer]
     
-    Fatigue -->|High| Reduce[Reduce Human Load]
-    Fatigue -->|Normal| Maintain[Maintain Current Flow]
+    Use --> Generate[Create Answer]
+    Generate --> Cite[Add Source References]
     
-    Reduce --> Automate[Increase Automation]
-    Maintain --> Report[Generate Reports]
-    Automate --> Report
+    Cite --> Quality{Is Answer Good?}
     
-    Report --> End[Process Complete]
+    Quality -->|Yes| Deliver[Give Answer to User]
+    Quality -->|No| Redo[Try Different Search]
+    
+    Redo --> Adjust[Change Search Settings]
+    Adjust --> Search
+    
+    Deliver --> Track[Track How Well It Worked]
+    Track --> Measure[Measure Success]
+    
+    Measure --> Accuracy[How Accurate?]
+    Measure --> Coverage[How Complete?]
+    
+    Accuracy --> Improve_System[Make System Better]
+    Coverage --> Improve_System
+    
+    Improve_System --> End[Search Complete]
 
     style Start fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px
-    style Gates fill:#fff59d,stroke:#fbc02d,stroke-width:2px
-    style Human fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
-    style Fatigue fill:#f3e5f5,stroke:#ab47bc,stroke-width:2px
+    style Split fill:#fff59d,stroke:#fbc02d,stroke-width:2px
+    style Rank fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
+    style Quality fill:#f3e5f5,stroke:#ab47bc,stroke-width:2px
     style End fill:#c8e6c9,stroke:#4caf50,stroke-width:2px
 ```
 
@@ -77,19 +84,27 @@ graph TD
 
 ## 🛠️ Orchestrator State Machine Nodes
 
-The orchestrator utilizes **Pydantic Graph** to govern state transitions through 22 robust, self-documenting node structures:
+The orchestrator utilizes **Pydantic Graph** to govern state transitions through concrete node classes:
 
-1. **`StartNode`**: Initiates the agent processing cycle.
-2. **`IdentifyDecisionPointsNode`**: Evaluates incoming query context using the **Decision Gate Agent** to categorize the operation into specific gates.
-3. **`AddReviewQueueNode`**: Batches and prioritizes the task by urgency.
-4. **`UIPresentationNode`**: Formulates a detailed operator card complete with context summaries, diff comparisons, and SLA timers using the **UI Presenter Agent**.
-5. **`HumanDecisionNode`**: Intercepts physical user actions (simulated or live operator keypresses/mouse clicks).
-6. **`AcceptAgentOutputNode` / `RejectWithReasonNode` / `HumanEditsContentNode` / `FullManualControlNode`**: Specific nodes corresponding to the four primary decision branches.
-7. **`UpdateAgentTrainingNode`**: Extracts negative reinforcement, edits, or manual overrides and feeds them to the **Feedback Learning Agent**.
-8. **`ImproveFutureDecisionsNode`**: Synthesizes the corrections and dynamically appends new, specific guidelines/prompts to the AI agent.
-9. **`MonitorFatigueNode`**: Audits operator stress levels (SLA delays, throughput logs) using the **Fatigue Monitor Agent**.
-10. **`ReduceHumanLoadNode` / `IncreaseAutomationNode`**: Initiates SRE workload safety overrides: throttles human queues and bumps the system's baseline AI automation rate from `50%` to `85%` (offloading manual reviews).
-11. **`GenerateReportsNode` / `EndNode`**: Generates a beautiful SRE operational report and consolidates continuous learning logs.
+1. **`StartNode`** ➡️ Initializes state and begins the ingestion workflow.
+2. **`ReadDocumentsNode` / `ParseTextNode`** ➡️ Ingests knowledge articles and parses raw strings.
+3. **`GetDocumentInfoNode` / `AddTagsNode`** ➡️ Leverages the **Document Ingestion Agent** to extract summaries, determine document types, and map searchable labels.
+4. **`SplitDecisionNode`** ➡️ Choice of splitting strategies (**Fixed Size**, **Smart Breaks**, or **Context-Preserved**).
+5. **`FixedSplitNode` / `SmartSplitNode` / `ContextSplitNode`** ➡️ Splits parent text into segment structures.
+6. **`ProcessChunksNode` / `ConvertSearchableNode` / `StoreSearchDatabaseNode`** ➡️ Segment chunks, encode into vector schemas, and index them.
+7. **`ReceiveQuestionNode` / `ImproveQuestionNode` / `ExpandQuestionNode`** ➡️ Capture user search query and expand terms conceptually with semantic synonyms using the **Query Expansion Agent** (preventing technology brand hallucinations).
+8. **`SearchDatabaseNode`** ➡️ Queries the active vector store based on current retrieval limit boundaries.
+9. **`FilterChunksNode`** ➡️ Evaluates and ranks chunk relevancy using the **Retrieval Ranking Agent** (enforcing a robust Python-level relevance threshold of `>= 0.25`).
+10. **`RankDecisionNode` / `ScoreChunksNode` / `SortChunksNode` / `PickTopMatchesNode`** ➡️ Sorts matches by score and truncates results to top-K matches.
+11. **`VerifySourcesNode` / `UseSourcesNode`** ➡️ Verifies citations and formats the matched facts.
+12. **`GenerateAnswerNode` / `CiteSourcesNode`** ➡️ Leverages the **Response Generation Agent** to synthesize answers and embed inline citations, assessing quality completeness (`is_good` flag).
+13. **`QualityDecisionNode`** ➡️ Branch choice:
+    - If quality checks pass ➡️ `DeliverAnswerNode`.
+    - If quality checks fail (incomplete or low confidence) ➡️ `RedoSearchNode`.
+14. **`RedoSearchNode` / `AdjustSettingsNode`** ➡️ Increments retry limits, widens top-K search parameters, and loops back to `SearchDatabaseNode` (auto-recovery).
+15. **`DeliverAnswerNode` / `TrackPerformanceNode` / `MeasureMetricsNode`** ➡️ Renders the final answer and logs performance metrics.
+16. **`AccuracyMetricsNode` / `CoverageMetricsNode` / `ImproveSystemNode`** ➡️ Measures factual accuracy and complete coverage.
+17. **`EndNode`** ➡️ Renders the final comprehensive RAG Operational Workflow Report.
 
 ---
 
@@ -126,33 +141,26 @@ The orchestrator utilizes **Pydantic Graph** to govern state transitions through
 
 ## 🧪 Running the Showcase
 
-To run the four high-fidelity reliability simulations, execute:
+To run the two high-fidelity RAG showcases, execute:
 
 ```powershell
 python main.py
 ```
 
-### 🔁 The Four Simulated Showcases
+### 🔁 The Two Simulated Showcases
 
-1. **Scenario 1: Human Approval (Approve Branch)**:
-   - *Task*: Reviewing a standard SRE guidelines marketing blog draft.
-   - *Gate*: `Approval Required` (Low Urgency).
-   - *Resolution*: Reviewer approves the output as compliant. System registers `0.22` fatigue score, maintaining baseline 50% automation.
+1. **Scenario 1: Happy Path (Direct Grounded Search)**:
+   - *Task*: User asks "What is the warranty period for product batteries?"
+   - *Ingested Docs*: Product manuals covering warranty clauses.
+   - *Outcome*: Segments content using fixed chunking ➡️ expands query ➡️ retrieves matching chunks with high relevance score ➡️ generates grounded answer with precise source citations ➡️ passes quality check ➡️ delivers direct response immediately.
 
-2. **Scenario 2: Human Denial & Learning (Deny Branch)**:
-   - *Task*: Evaluating a resume screening submission.
-   - *Gate*: `Review Needed` (Medium Urgency).
-   - *Resolution*: Reviewer rejects the output because the candidate lacks required senior native Rust experience. The SRE learning loop captures the rejection reason and automatically appends a strict language validation constraint to the agent prompts to improve future autonomous screenings.
-
-3. **Scenario 3: Human Editing (Edit Branch)**:
-   - *Task*: French translation quality checkpoint.
-   - *Gate*: `Editing Checkpoint` (Medium Urgency).
-   - *Resolution*: Reviewer polishes the translation draft. SRE learning loop logs the differences between the agent draft and human edit, updating the agent's prompts to prioritize colloquial phrasing and native usage.
-
-4. **Scenario 4: Manual Takeover & Fatigue Auto-Balance (Takeover/Overload Branch)**:
-   - *Task*: Authorizing a wire transfer refund of $12,500.00.
-   - *Gate*: `Complex Case` (High Urgency).
-   - *Resolution*: Amount exceeds standard agent credit limits ($10,000). A senior compliance officer manual takeover is triggered. Reviewer fatigue scores spike to `0.85` (overload alert). The orchestrator automatically throttles the human review queues and escalates the AI automation rate to `85%` (up from 50%) to immediately offload operator burden.
+2. **Scenario 2: Loop Path (Quality Re-evaluation & Parameter Adjustment)**:
+   - *Task*: User asks "What are the recovery steps and limits during severe queue spikes?"
+   - *Ingested Docs*: Operations playbooks (only describes alert sirens) and Risk guidelines (describes emergency throttling recovery steps and $10,000 limits).
+   - *Outcome*:
+     - **Attempt 1**: Sparse search only retrieves the Playbook alerts segment. Fails completeness self-checks due to missing recovery steps/limits. Quality check flags `is_good = False`.
+     - **Quality Recovery**: Graph routes to `RedoSearch` and `AdjustSettings`, raising retrieval fetch limits (top-2 ➡️ top-4) and broadening terms.
+     - **Attempt 2**: Broadened search retrieves all guidelines ➡️ relevance agent keeps the exact recovery steps chunk ➡️ generates complete grounded response citing Compliance guidelines ➡️ passes quality check ➡️ delivers report.
 
 ---
 
@@ -162,13 +170,13 @@ python main.py
 ├── agentic_system/
 │   ├── __init__.py
 │   ├── config.py       # Configuration and Azure OpenAI client setup
-│   ├── models.py       # Pydantic schemas: Gating, Human Decisions, Feedback, State
-│   ├── prompts.py      # System prompts for gating, UI queue presentation, and learning loops
-│   ├── agents.py       # High-fidelity classes for Decision Gate, UI, Feedback, and Fatigue Agents
-│   └── graph.py        # complete pydantic-graph state machine wiring (22 nodes)
-├── main.py             # Entrypoint driving the four sequential showcases
+│   ├── models.py       # Pydantic schemas: Document, Chunk, SearchResult, State, deps
+│   ├── prompts.py      # System prompts for document indexing, query expansion, relevance, and grounded citations
+│   ├── agents.py       # High-fidelity classes for Ingestion, Query, Relevance, and Generation Agents
+│   └── graph.py        # complete RAG orchestrator state machine wiring (26 nodes)
+├── main.py             # Entrypoint driving the two sequential showcases
 ├── README.md           # Premium SRE documentation
-├── about.md            # Human-in-the-Loop pattern guide
+├── about.md            # Knowledge Retrieval (RAG) pattern guide
 └── diagram.mmd         # Mermaid flowchart diagram
 ```
 
@@ -176,6 +184,6 @@ python main.py
 
 ## 🛡️ Robust Portability & Fallbacks
 
-- **High-Fidelity Mocks**: Automatically active when `AZURE_OPENAI_API_KEY` is not present in `.env`, replicating identical self-healing telemetry, structured logs, and fatigue spikes offline.
+- **High-Fidelity Mocks**: Automatically active when `AZURE_OPENAI_API_KEY` is not present in `.env`, replicating identical self-healing telemetry, search adjustments, and structured reports offline.
 - **Pydantic Validation Retries**: Wrapper agents use configured validation retries to guarantee 100% reliable structured tool-calling schema parsing across LLMs.
-- **Fatigue Monitoring**: Provides an active load-balancing safety system that prevents human reviewer burnout under queue overload conditions.
+- **Deterministic Python Cutoffs**: Combines LLM similarity matching with robust, deterministic code checks (relevance score `>= 0.25` filter) to guarantee execution safety.

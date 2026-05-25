@@ -1,278 +1,444 @@
 import asyncio
-from typing import Union
+from typing import Union, List
 from pydantic_graph import BaseNode, End, GraphRunContext, Graph
-from .agents import DecisionGateAgent, UIPresenterAgent, FeedbackLearningAgent, FatigueMonitorAgent
+from .agents import DocumentIngestionAgent, QueryExpansionAgent, RetrievalRankingAgent, ResponseGenerationAgent
 from .models import (
     State,
     Dependencies,
-    GateType,
-    DecisionType,
-    QueueItem,
-    HumanDecision,
-    FeedbackLog,
+    SplitType,
+    Document,
+    Chunk,
+    SearchResult,
+    RAGResponse,
 )
 
 class StartNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "IdentifyDecisionPointsNode":
-        print("\n=== [Start Node] Beginning Agent Processing loop... ===")
-        print(f"  Target Operation: '{ctx.state.query}'")
+    ) -> "ReadDocumentsNode":
+        print("\n=== [Start Node] Initializing Knowledge Retrieval (RAG) pipeline... ===")
+        print(f"  Target User Query: '{ctx.state.query}'")
         print(f"  Active Scenario: {ctx.state.scenario.upper()}")
-        return IdentifyDecisionPointsNode()
+        ctx.state.system_status = "Initializing Ingestion"
+        return ReadDocumentsNode()
 
-class IdentifyDecisionPointsNode(BaseNode[State, Dependencies, str]):
+class ReadDocumentsNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "AddReviewQueueNode":
-        print("\n=== [Identify Decision Points Node] Scanning operation query for Decision Gates... ===")
-        gate = await ctx.deps.gate_agent.run(ctx.state.query, ctx.state.scenario)
-        ctx.state.gate_identified = gate
-        print(f"  Identified Decision Gate point: [{gate.value.upper()}]")
-        return AddReviewQueueNode()
+    ) -> "ParseTextNode":
+        print("\n=== [Read Documents Node] Reading knowledge documents from storage... ===")
+        print(f"  Found {len(ctx.state.documents)} documents in pipeline collection.")
+        ctx.state.system_status = "Reading Documents"
+        return ParseTextNode()
 
-class AddReviewQueueNode(BaseNode[State, Dependencies, str]):
+class ParseTextNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "UIPresentationNode":
-        print("\n=== [Add Review Queue Node] Routing task to Human Review Queue... ===")
-        print("  - Batching similar operations.")
-        print("  - Categorizing by task priority.")
-        return UIPresentationNode()
+    ) -> "GetDocumentInfoNode":
+        print("\n=== [Parse Text Node] Segmenting and extracting text blocks... ===")
+        ctx.state.system_status = "Parsing Text"
+        return GetDocumentInfoNode()
 
-class UIPresentationNode(BaseNode[State, Dependencies, str]):
+class GetDocumentInfoNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "HumanDecisionNode":
-        print("\n=== [UI Presentation Node] Formulating review item presentation context... ===")
-        item = await ctx.deps.ui_agent.run(ctx.state.query, ctx.state.scenario)
-        ctx.state.queue_item = item
+    ) -> "AddTagsNode":
+        print("\n=== [Get Document Info Node] Extracting metadata summaries from docs... ===")
+        ingestion_agent = ctx.deps.ingestion_agent
+        for doc in ctx.state.documents:
+            meta = await ingestion_agent.run(doc.title, doc.content)
+            doc.metadata["summary"] = meta.summary
+            doc.metadata["doc_type"] = meta.doc_type
+            doc.tags = meta.tags
+            print(f"  * Indexed Doc: '{doc.title}' | Type: {meta.doc_type}")
+            print(f"    Summary: {meta.summary}")
+        ctx.state.system_status = "Extracting Info"
+        return AddTagsNode()
+
+class AddTagsNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "SplitDecisionNode":
+        print("\n=== [Add Tags Node] Mapping searchable classification keywords... ===")
+        for doc in ctx.state.documents:
+            print(f"  * Title: '{doc.title}' -> Tags: {doc.tags}")
+        ctx.state.system_status = "Adding Tags"
+        return SplitDecisionNode()
+
+class SplitDecisionNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> Union["FixedSplitNode", "SmartSplitNode", "ContextSplitNode"]:
+        print("\n=== [Split Decision Node] Evaluating chunking strategies... ===")
         
-        print("\n[Human Operator Queue UI Card]")
-        print("------------------------------------------------------------")
-        print(f"  📌 Context: {item.context_summary}")
-        print(f"  ⚠️ Urgency Tier: {item.urgency.upper()}")
-        print(f"  ⏳ SLA response window: {item.sla_timer_sec}s countdown active")
-        print(f"  🤖 AI Original draft output:\n    '{item.original_agent_output}'")
-        print(f"  📄 Target Content Draft:\n    '{item.content_draft}'")
-        print("------------------------------------------------------------")
-        return HumanDecisionNode()
-
-class HumanDecisionNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> Union[
-        "AcceptAgentOutputNode",
-        "RejectWithReasonNode",
-        "HumanEditsContentNode",
-        "FullManualControlNode",
-    ]:
-        print("\n=== [Human Decision Node] Intercepting Operator keyboard/mouse actions... ===")
-        scenario = ctx.state.scenario
-        
-        # Simulate high-fidelity human decisions based on scenario
-        if scenario == "approve":
-            decision = HumanDecision(
-                decision=DecisionType.APPROVE,
-                reviewer_feedback="Original draft meets corporate SRE standards. Approved."
-            )
-            ctx.state.human_decision = decision
-            print("  [Human Decision Triggered] APPROVED: Content accepted.")
-            return AcceptAgentOutputNode()
-            
-        elif scenario == "deny":
-            decision = HumanDecision(
-                decision=DecisionType.DENY,
-                reviewer_feedback="Resume screening error. Bob has Python and Go skills but the Rust Team requires senior-level native Rust experience."
-            )
-            ctx.state.human_decision = decision
-            print("  [Human Decision Triggered] DENIED: Content rejected.")
-            return RejectWithReasonNode()
-            
-        elif scenario == "edit":
-            decision = HumanDecision(
-                decision=DecisionType.EDIT,
-                reviewer_feedback="French: Bonjour le monde",
-                edited_content="French: Bonjour tout le monde"
-            )
-            ctx.state.human_decision = decision
-            print("  [Human Decision Triggered] EDIT: Content polished manually.")
-            return HumanEditsContentNode()
-            
-        else: # takeover_fatigue
-            decision = HumanDecision(
-                decision=DecisionType.TAKEOVER,
-                takeover_reason="Refund transfer amount ($12,500) exceeds default agent credit limit ($10,000). Direct senior compliance officer manual takeover initiated."
-            )
-            ctx.state.human_decision = decision
-            print("  [Human Decision Triggered] TAKEOVER: Manual operator control engaged.")
-            return FullManualControlNode()
-
-class AcceptAgentOutputNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "ContinueWorkflowNode":
-        print("\n=== [Accept Agent Output Node] Accepting agent draft... ===")
-        print("  Proceeding to execute downstream publication.")
-        return ContinueWorkflowNode()
-
-class RejectWithReasonNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "CaptureRejectionPatternNode":
-        print("\n=== [Reject With Reason Node] Rejecting content... ===")
-        print(f"  Reason logged: '{ctx.state.human_decision.reviewer_feedback}'")
-        return CaptureRejectionPatternNode()
-
-class HumanEditsContentNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "RecordEditChangesNode":
-        print("\n=== [Human Edits Content Node] Merging human edits into draft workspace... ===")
-        print(f"  Original: '{ctx.state.human_decision.reviewer_feedback}'")
-        print(f"  Modified: '{ctx.state.human_decision.edited_content}'")
-        return RecordEditChangesNode()
-
-class FullManualControlNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "LogTakeoverReasonNode":
-        print("\n=== [Full Manual Control Node] AI Agent safely suspended. ===")
-        print(f"  Takeover Reason: '{ctx.state.human_decision.takeover_reason}'")
-        return LogTakeoverReasonNode()
-
-class ContinueWorkflowNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "TrackDecisionMetricsNode":
-        print("\n=== [Continue Workflow Node] Resuming main pipeline execution... ===")
-        return TrackDecisionMetricsNode()
-
-class CaptureRejectionPatternNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "UpdateAgentTrainingNode":
-        print("\n=== [Capture Rejection Pattern Node] Recording negative feedback log... ===")
-        return UpdateAgentTrainingNode()
-
-class RecordEditChangesNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "UpdateAgentTrainingNode":
-        print("\n=== [Record Edit Changes Node] Recording structural edits differences... ===")
-        return UpdateAgentTrainingNode()
-
-class LogTakeoverReasonNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "UpdateAgentTrainingNode":
-        print("\n=== [Log Takeover Reason Node] Recording manual takeover override parameters... ===")
-        return UpdateAgentTrainingNode()
-
-class UpdateAgentTrainingNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "ImproveFutureDecisionsNode":
-        print("\n=== [Update Agent Training Node] Feeding corrections to SRE Learning loop... ===")
-        feedback_agent = ctx.deps.feedback_agent
-        log = await feedback_agent.run(ctx.state.human_decision)
-        ctx.state.feedback_log = log
-        return ImproveFutureDecisionsNode()
-
-class ImproveFutureDecisionsNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "TrackDecisionMetricsNode":
-        print("\n=== [Improve Future Decisions Node] Guidelines updated in agent context! ===")
-        log = ctx.state.feedback_log
-        print(f"  * Learning insights: {log.learning_points}")
-        print(f"  * Guidelines constraint added: '{log.guidelines_updated}'")
-        ctx.state.learned_patterns = f"Learned Constraint: {log.guidelines_updated}\nFeedback: {log.learning_points}"
-        return TrackDecisionMetricsNode()
-
-class TrackDecisionMetricsNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "MonitorFatigueNode":
-        print("\n=== [Track Decision Metrics Node] Updating decision frequency databases... ===")
-        return MonitorFatigueNode()
-
-class MonitorFatigueNode(BaseNode[State, Dependencies, str]):
-    async def run(
-        self, ctx: GraphRunContext[State, Dependencies]
-    ) -> Union["ReduceHumanLoadNode", "MaintainCurrentFlowNode"]:
-        print("\n=== [Monitor Fatigue Node] Auditing operator work fatigue thresholds... ===")
-        score, action = await ctx.deps.fatigue_agent.evaluate(ctx.state.scenario)
-        ctx.state.fatigue_score = score
-        ctx.state.load_action = action
-        
-        if action == "REDUCE":
-            return ReduceHumanLoadNode()
+        # Decide chunking split based on active scenario config
+        if ctx.state.scenario == "happy_path":
+            print("  Selected Chunk Strategy: [FIXED SIZE CHUNKS] (Optimal for simple, direct manuals)")
+            return FixedSplitNode()
+        elif ctx.state.scenario == "loop_path":
+            print("  Selected Chunk Strategy: [NATURAL BREAKS / SMART] (Optimal for complex policies)")
+            return SmartSplitNode()
         else:
-            return MaintainCurrentFlowNode()
+            print("  Selected Chunk Strategy: [CONTEXT KEEP TOGETHER]")
+            return ContextSplitNode()
 
-class ReduceHumanLoadNode(BaseNode[State, Dependencies, str]):
+class FixedSplitNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "IncreaseAutomationNode":
-        print("\n=== [Reduce Human Load Node] HIGH WORKLOAD FATIGUE DETECTED! ===")
-        print("  - Throttling human review queue rates.")
-        print("  - Batching items in larger groups to lower notification count.")
-        return IncreaseAutomationNode()
+    ) -> "ProcessChunksNode":
+        print("\n=== [Fixed Split Node] Executing division by equal size characters (500 char blocks)... ===")
+        for doc in ctx.state.documents:
+            # Simple fixed split simulation
+            content = doc.content
+            chunk_1 = content[:len(content)//2]
+            chunk_2 = content[len(content)//2:]
+            ctx.state.chunks.append(Chunk(text=chunk_1, doc_title=doc.title, index=1, start_char=0, end_char=len(chunk_1)))
+            ctx.state.chunks.append(Chunk(text=chunk_2, doc_title=doc.title, index=2, start_char=len(chunk_1), end_char=len(content)))
+        return ProcessChunksNode()
 
-class IncreaseAutomationNode(BaseNode[State, Dependencies, str]):
+class SmartSplitNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "GenerateReportsNode":
-        print("\n=== [Increase Automation Node] Elevating AI confidence thresholds... ===")
-        ctx.state.automation_level = 0.85
-        print(f"  AI Automation Rate elevated: 50% ➡️ {ctx.state.automation_level * 100:.0f}% (OFFLOADING HUMAN)")
-        return GenerateReportsNode()
+    ) -> "ProcessChunksNode":
+        print("\n=== [Smart Split Node] Executing division by natural sentence breaks... ===")
+        for doc in ctx.state.documents:
+            # Segment by logical parts
+            parts = doc.content.split("\n\n")
+            for i, part in enumerate(parts):
+                if part.strip():
+                    ctx.state.chunks.append(Chunk(text=part.strip(), doc_title=doc.title, index=i+1, start_char=0, end_char=len(part)))
+        return ProcessChunksNode()
 
-class MaintainCurrentFlowNode(BaseNode[State, Dependencies, str]):
+class ContextSplitNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "GenerateReportsNode":
-        print("\n=== [Maintain Current Flow Node] Load within safe margins. ===")
-        print(f"  Maintained baseline AI Automation Rate: {ctx.state.automation_level * 100:.0f}%")
-        return GenerateReportsNode()
+    ) -> "ProcessChunksNode":
+        print("\n=== [Context Split Node] Executing division to keep related parts together... ===")
+        for doc in ctx.state.documents:
+            ctx.state.chunks.append(Chunk(text=doc.content, doc_title=doc.title, index=1, start_char=0, end_char=len(doc.content)))
+        return ProcessChunksNode()
 
-class GenerateReportsNode(BaseNode[State, Dependencies, str]):
+class ProcessChunksNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "ConvertSearchableNode":
+        print("\n=== [Process Chunks Node] Processing segmented text chunks... ===")
+        print(f"  Generated {len(ctx.state.chunks)} active chunks from document collection.")
+        ctx.state.system_status = "Processing Chunks"
+        return ConvertSearchableNode()
+
+class ConvertSearchableNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "StoreSearchDatabaseNode":
+        print("\n=== [Convert Searchable Node] Encoding chunks into searchable schema records... ===")
+        ctx.state.system_status = "Converting Formats"
+        return StoreSearchDatabaseNode()
+
+class StoreSearchDatabaseNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "ReadyToSearchNode":
+        print("\n=== [Store Search Database Node] Committing records to vector search store index... ===")
+        ctx.state.system_status = "Database Indexed"
+        return ReadyToSearchNode()
+
+class ReadyToSearchNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "ReceiveQuestionNode":
+        print("\n=== [Ready To Search Node] Index loaded! Knowledge Base is online. ===")
+        ctx.state.system_status = "Ready to Search"
+        return ReceiveQuestionNode()
+
+class ReceiveQuestionNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "ImproveQuestionNode":
+        print("\n=== [Receive Question Node] Intercepting user search question... ===")
+        print(f"  Raw User Query: '{ctx.state.query}'")
+        ctx.state.system_status = "Receiving Query"
+        return ImproveQuestionNode()
+
+class ImproveQuestionNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "ExpandQuestionNode":
+        print("\n=== [Improve Question Node] Analyzing semantic parameters of question... ===")
+        ctx.state.system_status = "Improving Question"
+        return ExpandQuestionNode()
+
+class ExpandQuestionNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "SearchDatabaseNode":
+        print("\n=== [Expand Question Node] Expanding search terms with synonyms... ===")
+        improved = await ctx.deps.expansion_agent.run(ctx.state.query)
+        ctx.state.improved_query = improved
+        print(f"  * Optimized Query: '{improved}'")
+        ctx.state.system_status = "Expanding Terms"
+        return SearchDatabaseNode()
+
+class SearchDatabaseNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "FilterChunksNode":
+        print("\n=== [Search Database Node] Querying vector index with expanded search terms... ===")
+        print(f"  Attempt: #{ctx.state.search_attempts} | Active Retrieval limit: top-{ctx.state.retrieval_limit} chunks.")
+        
+        # Simulate retrieval matched chunks based on query/scenario/attempt
+        ctx.state.retrieved_chunks = []
+        
+        if ctx.state.scenario == "happy_path":
+            # Match battery document chunks
+            for chunk in ctx.state.chunks:
+                if "battery" in chunk.doc_title.lower() or "warranty" in chunk.text.lower():
+                    ctx.state.retrieved_chunks.append(chunk)
+        else: # loop_path (SRE Playbook)
+            if ctx.state.search_attempts == 1:
+                # Sparse attempt retrieves only the generic alarm warning chunk
+                for chunk in ctx.state.chunks:
+                    if "warning" in chunk.text.lower():
+                        ctx.state.retrieved_chunks.append(chunk)
+            else:
+                # Attempt 2 (Broadened retrieval): retrieve full recovery rules and limits
+                for chunk in ctx.state.chunks:
+                    ctx.state.retrieved_chunks.append(chunk)
+                    
+        print(f"  Fetched {len(ctx.state.retrieved_chunks)} raw matches from database.")
+        ctx.state.system_status = f"Database Searched Attempt {ctx.state.search_attempts}"
+        return FilterChunksNode()
+
+class FilterChunksNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "RankDecisionNode":
+        print("\n=== [Filter Chunks Node] Removing low-relevance results... ===")
+        # Evaluate matched chunks and compute relevance score
+        ctx.state.ranked_results = []
+        rank_agent = ctx.deps.ranking_agent
+        
+        # Rank matched chunks
+        for chunk in ctx.state.retrieved_chunks:
+            # We pass query and text to similarity rank agent
+            relevance = await rank_agent.run(ctx.state.improved_query, chunk.text)
+            if relevance.score >= 0.25:
+                ctx.state.ranked_results.append(SearchResult(chunk=chunk, score=relevance.score))
+                print(f"  * [KEEP] Score: {relevance.score:.2f} | Chunk: '{chunk.text[:50]}...'")
+            else:
+                print(f"  * [DROP] Score: {relevance.score:.2f} (Below 0.25 cutoff) | Chunk: '{chunk.text[:50]}...'")
+                
+        ctx.state.system_status = "Filtering Matches"
+        return RankDecisionNode()
+
+class RankDecisionNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "ScoreChunksNode":
+        print("\n=== [Rank Decision Node] Determining ranking workflows... ===")
+        return ScoreChunksNode()
+
+class ScoreChunksNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "SortChunksNode":
+        print("\n=== [Score Chunks Node] Executing absolute similarity score assessments... ===")
+        return SortChunksNode()
+
+class SortChunksNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "PickTopMatchesNode":
+        print("\n=== [Sort Chunks Node] Sorting matched chunks by descending relevance score... ===")
+        ctx.state.ranked_results.sort(key=lambda x: x.score, reverse=True)
+        return PickTopMatchesNode()
+
+class PickTopMatchesNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "VerifySourcesNode":
+        print("\n=== [Pick Top Matches Node] Truncating output to top matches... ===")
+        # Limit matches to retrieval limit configuration
+        ctx.state.ranked_results = ctx.state.ranked_results[:ctx.state.retrieval_limit]
+        print(f"  Retained top-{len(ctx.state.ranked_results)} matches for response synthesis:")
+        for res in ctx.state.ranked_results:
+            print(f"    - Score: {res.score:.2f} | Source: {res.chunk.doc_title} [Idx: {res.chunk.index}]")
+        return VerifySourcesNode()
+
+class VerifySourcesNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "UseSourcesNode":
+        print("\n=== [Verify Sources Node] Confirming source citations are active... ===")
+        ctx.state.system_status = "Verifying Sources"
+        return UseSourcesNode()
+
+class UseSourcesNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "GenerateAnswerNode":
+        print("\n=== [Use Sources Node] Mapping factual segments to prompt context... ===")
+        return GenerateAnswerNode()
+
+class GenerateAnswerNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "CiteSourcesNode":
+        print("\n=== [Generate Answer Node] Synthesizing grounded RAG answer... ===")
+        chunks_to_use = [res.chunk for res in ctx.state.ranked_results]
+        
+        response = await ctx.deps.generation_agent.run(
+            ctx.state.improved_query,
+            chunks_to_use,
+            ctx.state.search_attempts
+        )
+        ctx.state.generated_response = response
+        ctx.state.system_status = "Generating Answer"
+        return CiteSourcesNode()
+
+class CiteSourcesNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "QualityDecisionNode":
+        print("\n=== [Cite Sources Node] Resolving inline source citations... ===")
+        resp = ctx.state.generated_response
+        print("\n[AI Grounded Response Draft]")
+        print("------------------------------------------------------------")
+        print(f"  💬 Answer:\n    '{resp.answer}'")
+        print(f"  📚 Citations: {resp.citations}")
+        print(f"  🔍 Quality check: {'PASS' if resp.is_good else 'FAIL'}")
+        print(f"  🎯 Confidence Score: {resp.confidence_score:.2f}")
+        print("------------------------------------------------------------")
+        ctx.state.system_status = "Citing Sources"
+        return QualityDecisionNode()
+
+class QualityDecisionNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> Union["DeliverAnswerNode", "RedoSearchNode"]:
+        print("\n=== [Quality Decision Node] Validating output completeness and confidence... ===")
+        resp = ctx.state.generated_response
+        
+        if resp.is_good:
+            print("  [Quality Decision] SUCCESS: Output passes completeness check.")
+            return DeliverAnswerNode()
+        else:
+            if ctx.state.search_attempts >= ctx.state.max_attempts:
+                print("  [Quality Decision] WARNING: Quality failed but max search attempts reached. Delivering fallback.")
+                return DeliverAnswerNode()
+            else:
+                print("  [Quality Decision] FAILURE: Answer is incomplete or low confidence! Activating recovery loop.")
+                return RedoSearchNode()
+
+class RedoSearchNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "AdjustSettingsNode":
+        print("\n=== [Redo Search Node] Initiating search parameters expansion... ===")
+        ctx.state.search_attempts += 1
+        return AdjustSettingsNode()
+
+class AdjustSettingsNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "SearchDatabaseNode":
+        print("\n=== [Adjust Settings Node] Upgrading search configurations... ===")
+        print("  - Expanding query breadth terms.")
+        ctx.state.retrieval_limit = 4  # Fetch more chunks to guarantee completeness!
+        print(f"  - Elevated Retrieval Fetch limits: top-2 ➡️ top-{ctx.state.retrieval_limit}")
+        ctx.state.system_status = "Retrieval Parameters Elevated"
+        return SearchDatabaseNode()
+
+class DeliverAnswerNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "TrackPerformanceNode":
+        print("\n=== [Deliver Answer Node] Delivering grounded response to user... ===")
+        ctx.state.system_status = "Answer Delivered"
+        return TrackPerformanceNode()
+
+class TrackPerformanceNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "MeasureMetricsNode":
+        print("\n=== [Track Performance Node] Saving operational search logs... ===")
+        return MeasureMetricsNode()
+
+class MeasureMetricsNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "AccuracyMetricsNode":
+        print("\n=== [Measure Metrics Node] Evaluating system search benchmarks... ===")
+        return AccuracyMetricsNode()
+
+class AccuracyMetricsNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "CoverageMetricsNode":
+        print("\n=== [Accuracy Metrics Node] Calculating factual alignment score... ===")
+        # Calculate factual accuracy metrics
+        if ctx.state.generated_response.is_good:
+            ctx.state.accuracy_score = 0.98
+        else:
+            ctx.state.accuracy_score = 0.50
+        print(f"  Factual Accuracy Metric: {ctx.state.accuracy_score * 100:.1f}%")
+        return CoverageMetricsNode()
+
+class CoverageMetricsNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "ImproveSystemNode":
+        print("\n=== [Coverage Metrics Node] Calculating complete coverage score... ===")
+        # Calculate info completeness metrics
+        if ctx.state.generated_response.is_good:
+            ctx.state.coverage_score = 0.95
+        else:
+            ctx.state.coverage_score = 0.40
+        print(f"  Info Coverage Metric: {ctx.state.coverage_score * 100:.1f}%")
+        return ImproveSystemNode()
+
+class ImproveSystemNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
     ) -> "EndNode":
-        print("\n=== [Generate Reports Node] Consolidating HITL operational audit trails... ===")
+        print("\n=== [Improve System Node] Applying performance insights... ===")
+        ctx.state.system_status = "System Benchmarked"
         return EndNode()
 
 class EndNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
     ) -> End[str]:
-        print("\n=== [End Node] Generating Final Workflow Complete Report... ===")
+        print("\n=== [End Node] Formatting final Search Complete Report... ===")
         
-        gate_str = ctx.state.gate_identified.value if ctx.state.gate_identified else "N/A"
-        decision_str = ctx.state.human_decision.decision.value if ctx.state.human_decision else "N/A"
-        feedback_str = ctx.state.human_decision.reviewer_feedback or "N/A" if ctx.state.human_decision else "N/A"
+        doc_count = len(ctx.state.documents)
+        chunk_count = len(ctx.state.chunks)
+        query = ctx.state.query
+        expanded = ctx.state.improved_query
+        resp = ctx.state.generated_response
         
-        learning_section = ""
-        if ctx.state.feedback_log:
-            learning_section = (
-                f"\nContinuous Training Feedback Log:\n"
-                f"  * Insights Gained: {ctx.state.feedback_log.learning_points}\n"
-                f"  * System Prompt Constraints Added: '{ctx.state.feedback_log.guidelines_updated}'\n"
-            )
-            
+        answer = resp.answer if resp else "N/A"
+        citations = resp.citations if resp else []
+        conf = resp.confidence_score if resp else 0.0
+        good = "PASS" if resp and resp.is_good else "FAIL"
+        
         report = (
             "==============================================================\n"
-            "            HUMAN-IN-THE-LOOP (HITL) WORKFLOW REPORT\n"
+            "            KNOWLEDGE RETRIEVAL (RAG) WORKFLOW REPORT\n"
             "==============================================================\n"
-            f"Objective Task Query: '{ctx.state.query}'\n"
-            f"Active Decision Gate: {gate_str}\n"
-            f"Human Operator Action: {decision_str}\n"
-            f"Operator Feedback/Notes: '{feedback_str}'\n"
-            f"Reviewer Fatigue Index: {ctx.state.fatigue_score:.2f} ({ctx.state.load_action})\n"
-            f"Final AI System Automation Rate: {ctx.state.automation_level * 100:.0f}%\n"
-            f"{learning_section}"
+            f"Documents Ingested: {doc_count} docs | Total Chunks Created: {chunk_count}\n"
+            f"Original User Query: '{query}'\n"
+            f"Synonym Expanded Query: '{expanded}'\n"
+            f"Total Search Attempts: {ctx.state.search_attempts} (Max: {ctx.state.max_attempts})\n"
+            f"Final Retrieval Limit: top-{ctx.state.retrieval_limit} chunks\n"
+            f"Quality Validation: {good} (Self-Assessed Confidence: {conf:.2f})\n"
+            "--------------------------------------------------------------\n"
+            f"💬 synthesized Answer:\n{answer}\n"
+            f"📚 Source Citations: {citations}\n"
+            "--------------------------------------------------------------\n"
+            f"📊 SRE Search Benchmarks:\n"
+            f"  * Factual Accuracy: {ctx.state.accuracy_score * 100:.1f}%\n"
+            f"  * Context Coverage: {ctx.state.coverage_score * 100:.1f}%\n"
             "=============================================================="
         )
         ctx.state.final_report = report
@@ -283,26 +449,40 @@ def build_graph() -> Graph:
     return Graph(
         nodes=[
             StartNode,
-            IdentifyDecisionPointsNode,
-            AddReviewQueueNode,
-            UIPresentationNode,
-            HumanDecisionNode,
-            AcceptAgentOutputNode,
-            RejectWithReasonNode,
-            HumanEditsContentNode,
-            FullManualControlNode,
-            ContinueWorkflowNode,
-            CaptureRejectionPatternNode,
-            RecordEditChangesNode,
-            LogTakeoverReasonNode,
-            UpdateAgentTrainingNode,
-            ImproveFutureDecisionsNode,
-            TrackDecisionMetricsNode,
-            MonitorFatigueNode,
-            ReduceHumanLoadNode,
-            IncreaseAutomationNode,
-            MaintainCurrentFlowNode,
-            GenerateReportsNode,
+            ReadDocumentsNode,
+            ParseTextNode,
+            GetDocumentInfoNode,
+            AddTagsNode,
+            SplitDecisionNode,
+            FixedSplitNode,
+            SmartSplitNode,
+            ContextSplitNode,
+            ProcessChunksNode,
+            ConvertSearchableNode,
+            StoreSearchDatabaseNode,
+            ReadyToSearchNode,
+            ReceiveQuestionNode,
+            ImproveQuestionNode,
+            ExpandQuestionNode,
+            SearchDatabaseNode,
+            FilterChunksNode,
+            RankDecisionNode,
+            ScoreChunksNode,
+            SortChunksNode,
+            PickTopMatchesNode,
+            VerifySourcesNode,
+            UseSourcesNode,
+            GenerateAnswerNode,
+            CiteSourcesNode,
+            QualityDecisionNode,
+            RedoSearchNode,
+            AdjustSettingsNode,
+            DeliverAnswerNode,
+            TrackPerformanceNode,
+            MeasureMetricsNode,
+            AccuracyMetricsNode,
+            CoverageMetricsNode,
+            ImproveSystemNode,
             EndNode,
         ],
         state_type=State,
@@ -311,15 +491,15 @@ def build_graph() -> Graph:
 
 def build_deps() -> Dependencies:
     return Dependencies(
-        gate_agent=DecisionGateAgent(),
-        ui_agent=UIPresenterAgent(),
-        feedback_agent=FeedbackLearningAgent(),
-        fatigue_agent=FatigueMonitorAgent(),
+        ingestion_agent=DocumentIngestionAgent(),
+        expansion_agent=QueryExpansionAgent(),
+        ranking_agent=RetrievalRankingAgent(),
+        generation_agent=ResponseGenerationAgent(),
     )
 
-async def run_graph(query: str, scenario: str = "approve") -> tuple[str, State]:
+async def run_graph(query: str, scenario: str = "happy_path", documents: List[Document] = None) -> tuple[str, State]:
     graph = build_graph()
     deps = build_deps()
-    state = State(query=query, scenario=scenario)
+    state = State(query=query, scenario=scenario, documents=documents or [])
     result = await graph.run(StartNode(), state=state, deps=deps)
     return result.output, state

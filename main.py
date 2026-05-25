@@ -1,88 +1,84 @@
 import asyncio
 import sys
-from agentic_system.graph import run_graph, State
+from agentic_system.graph import run_graph, State, Document
 
 if sys.platform.startswith('win'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 async def main():
-    """Main entry point to execute the four Human-in-the-Loop showcases."""
+    """Main entry point to execute the two Knowledge Retrieval (RAG) showcases."""
     print("==========================================================================")
-    print("      STARTING SYSTEM SHOWCASE: HUMAN-IN-THE-LOOP (HITL) PATTERN")
+    print("      STARTING SYSTEM SHOWCASE: KNOWLEDGE RETRIEVAL (RAG) PATTERN")
     print("==========================================================================\n")
     
     # --------------------------------------------------------------------------
-    # SCENARIO 1: APPROVE
-    # Demonstrates: Simple Content -> Approval Required -> Human Approves
+    # SCENARIO 1: HAPPY PATH (Direct Answer & High Quality)
+    # Demonstrates: Loading Doc -> Segmenting -> Query Expansion -> Retrieval ->
+    #               relevance Ranking -> Synthesis -> Quality PASS -> Delivery.
     # --------------------------------------------------------------------------
     print("\n" + "="*80)
-    print("▶️ SCENARIO 1: HUMAN APPROVAL (Content Validation Checkpoint)")
+    print("▶️ SCENARIO 1: HAPPY PATH (Direct Grounded Search)")
     print("="*80)
-    query_1 = "Review and approve the new SRE guidelines blog post draft."
-    report_1, state_1 = await run_graph(query_1, scenario="approve")
+    
+    docs_1 = [
+        Document(
+            title="Product Hardware Manual",
+            content="Warranty Rules: The warranty period for product batteries is 3 years from the date of purchase. Replacement is fully covered if capacity degrades below 70%."
+        ),
+        Document(
+            title="User Charging Safety Guide",
+            content="Charging Safety: Never charge batteries above 45 degrees Celsius. Use only standard certified charging plugs to prevent battery swelling."
+        )
+    ]
+    
+    query_1 = "What is the warranty period for product batteries?"
+    report_1, state_1 = await run_graph(query_1, scenario="happy_path", documents=docs_1)
     
     print("\n\n" + "="*80)
     print("▶️ SCENARIO 1 PROGRESS BRIEF:")
-    print(f"  Gate Identified: {state_1.gate_identified.value if state_1.gate_identified else 'N/A'}")
-    print(f"  Operator Decision: {state_1.human_decision.decision.value if state_1.human_decision else 'N/A'}")
-    print(f"  Reviewer Fatigue Index: {state_1.fatigue_score:.2f} ({state_1.load_action})")
-    print(f"  System Automation Level: {state_1.automation_level * 100:.0f}%")
+    print(f"  Ingested Documents count: {len(state_1.documents)}")
+    print(f"  Total Segments Processed: {len(state_1.chunks)}")
+    print(f"  Expanded Search Query: '{state_1.improved_query}'")
+    print(f"  Total Match Chunks Fetched: {len(state_1.retrieved_chunks)}")
+    print(f"  Quality Verification Verdict: {'PASS' if state_1.generated_response and state_1.generated_response.is_good else 'FAIL'}")
+    print(f"  SRE Search Benchmarks: Accuracy={state_1.accuracy_score*100:.0f}%, Coverage={state_1.coverage_score*100:.0f}%")
     print("="*80 + "\n\n")
 
     # --------------------------------------------------------------------------
-    # SCENARIO 2: DENY (REJECTION)
-    # Demonstrates: Resume Rating -> Review Needed -> Human Denies & Learns
+    # SCENARIO 2: LOOP PATH (Quality Re-evaluation & Parameter Adjustment)
+    # Demonstrates: Retrieval gets incomplete chunks -> synthesizes incomplete answer ->
+    #               Quality Check flags FAIL -> Redo Search -> Adjust Settings (raise top-k) ->
+    #               Retrieve better chunks -> Re-synthesize -> Quality Check PASS -> Deliver.
     # --------------------------------------------------------------------------
     print("\n" + "="*80)
-    print("▶️ SCENARIO 2: HUMAN DENIAL (Resume Screening Validation)")
+    print("▶️ SCENARIO 2: LOOP PATH (Completeness Auto-Recovery & Quality Gate)")
     print("="*80)
-    query_2 = "Evaluate the resume submission of Bob Rustacean for the Rust Tech Lead role."
-    report_2, state_2 = await run_graph(query_2, scenario="deny")
+    
+    docs_2 = [
+        Document(
+            title="SRE Operations Playbook",
+            content="Queue Alerts: Severe queue spikes trigger standard warning sirens in the operations dashboard. Operators must investigate logs immediately to find bottlenecks."
+        ),
+        Document(
+            title="Compliance and Risk Guidelines",
+            content="Emergency Measures: During severe queue spikes, recovery steps are: 1) Activate traffic throttling, 2) Batch items into chunks of 10+, and 3) Elevate the AI automation rate to 85% to offload operators. The standard agent credit limit is $10,000."
+        )
+    ]
+    
+    query_2 = "What are the recovery steps and limits during severe queue spikes?"
+    report_2, state_2 = await run_graph(query_2, scenario="loop_path", documents=docs_2)
     
     print("\n\n" + "="*80)
     print("▶️ SCENARIO 2 PROGRESS BRIEF:")
-    print(f"  Gate Identified: {state_2.gate_identified.value if state_2.gate_identified else 'N/A'}")
-    print(f"  Operator Decision: {state_2.human_decision.decision.value if state_2.human_decision else 'N/A'}")
-    print(f"  Constraint Added to Guidelines: '{state_2.feedback_log.guidelines_updated if state_2.feedback_log else 'None'}'")
-    print("="*80 + "\n\n")
-
-    # --------------------------------------------------------------------------
-    # SCENARIO 3: EDIT (CHECKPOINT MODIFICATION)
-    # Demonstrates: Translation -> Editing Checkpoint -> Human Polishes
-    # --------------------------------------------------------------------------
-    print("\n" + "="*80)
-    print("▶️ SCENARIO 3: HUMAN EDITING (Translation Checkpoint Polish)")
-    print("="*80)
-    query_3 = "Polishing French translation block draft."
-    report_3, state_3 = await run_graph(query_3, scenario="edit")
-    
-    print("\n\n" + "="*80)
-    print("▶️ SCENARIO 3 PROGRESS BRIEF:")
-    print(f"  Gate Identified: {state_3.gate_identified.value if state_3.gate_identified else 'N/A'}")
-    print(f"  Operator Decision: {state_3.human_decision.decision.value if state_3.human_decision else 'N/A'}")
-    print(f"  Human Edit Result: '{state_3.human_decision.edited_content if state_3.human_decision else 'None'}'")
-    print("="*80 + "\n\n")
-
-    # --------------------------------------------------------------------------
-    # SCENARIO 4: TAKEOVER & FATIGUE LOAD BALANCING
-    # Demonstrates: Large wire transfer -> Human Takeover -> Fatigue triggers REDUCE load
-    # --------------------------------------------------------------------------
-    print("\n" + "="*80)
-    print("▶️ SCENARIO 4: MANUAL TAKEOVER & FATIGUE AUTO-BALANCE (Overload Protection)")
-    print("="*80)
-    query_4 = "Authorize wire transfer refund of $12,500.00 for client ACT-8812 under queue spikes."
-    report_4, state_4 = await run_graph(query_4, scenario="takeover_fatigue")
-    
-    print("\n\n" + "="*80)
-    print("▶️ SCENARIO 4 PROGRESS BRIEF:")
-    print(f"  Gate Identified: {state_4.gate_identified.value if state_4.gate_identified else 'N/A'}")
-    print(f"  Operator Decision: {state_4.human_decision.decision.value if state_4.human_decision else 'N/A'}")
-    print(f"  Reviewer Fatigue Index: {state_4.fatigue_score:.2f} ({state_4.load_action})")
-    print(f"  New AI System Automation Rate: {state_4.automation_level * 100:.0f}% (LOAD BALANCED)")
+    print(f"  Ingested Documents count: {len(state_2.documents)}")
+    print(f"  Total Search Attempts Performed: {state_2.search_attempts} (Activated Quality recovery loop)")
+    print(f"  Final Retrieval Fetch Limits: top-{state_2.retrieval_limit} chunks (Auto-Elevated from top-2)")
+    print(f"  Quality Verification Verdict: {'PASS' if state_2.generated_response and state_2.generated_response.is_good else 'FAIL'}")
+    print(f"  SRE Search Benchmarks: Accuracy={state_2.accuracy_score*100:.0f}%, Coverage={state_2.coverage_score*100:.0f}%")
     print("="*80 + "\n")
     
     print("\n==========================================================================")
-    print("       ALL FOUR SCENARIO SHOWCASES COMPLETED AND VERIFIED SUCCESSFULLY")
+    print("       ALL RAG PIPELINE SCENARIO SHOWCASES COMPLETED AND VERIFIED")
     print("==========================================================================")
 
 if __name__ == "__main__":

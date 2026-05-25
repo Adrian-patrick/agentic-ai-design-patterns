@@ -1,82 +1,82 @@
-# Human-in-the-Loop (HITL) Pattern
+# Knowledge Retrieval (RAG) Pattern
 
 ## When to Use
 
-- **High-stakes decisions**: When errors have significant consequences
-- **Regulatory compliance**: Required human oversight for legal reasons
-- **Quality assurance**: Ensuring output meets standards
-- **Edge cases**: Handling unusual or ambiguous situations
-- **Training data generation**: Using human feedback to improve
-- **Trust building**: Gradual automation with human validation
+- **Dynamic knowledge needs**: Accessing up-to-date information
+- **Large document collections**: Querying extensive knowledge bases
+- **Domain-specific applications**: Specialized knowledge integration
+- **Factual accuracy requirements**: Grounding responses in sources
+- **Citation requirements**: Providing verifiable references
+- **Reducing hallucinations**: Ensuring factual responses
 
 ## Where It Fits
 
-- **Content moderation**: Reviewing sensitive or borderline content
-- **Medical diagnosis**: Physician verification of AI recommendations
-- **Financial approvals**: Human authorization for large transactions
-- **Legal document review**: Attorney oversight of contracts
-- **Hiring decisions**: Human review of AI-screened candidates
+- **Enterprise search**: Internal document retrieval systems
+- **Customer support**: Knowledge base querying
+- **Research assistants**: Academic paper retrieval
+- **Legal research**: Case law and statute searching
+- **Technical documentation**: API and product documentation access
 
 ## Pros
 
-- **Quality assurance**: Human judgment catches AI errors
-- **Compliance**: Meets regulatory requirements
-- **Learning source**: Human feedback improves system
-- **Trust**: Users confident in human oversight
-- **Flexibility**: Humans handle edge cases well
-- **Accountability**: Clear responsibility chain
-- **Risk mitigation**: Prevents costly mistakes
+- **Accuracy**: Responses grounded in real sources
+- **Verifiability**: Citations enable fact-checking
+- **Scalability**: Handle vast document collections
+- **Currency**: Access to latest information
+- **Domain expertise**: Specialized knowledge integration
+- **Reduced hallucination**: Less fabrication of facts
+- **Flexibility**: Easy to update knowledge base
 
 ## Cons
 
-- **Scalability limits**: Human bandwidth constrains throughput
-- **Cost increase**: Human reviewers are expensive
-- **Latency addition**: Waiting for human response delays process
-- **Inconsistency**: Different humans make different decisions
-- **Fatigue effects**: Quality degrades with reviewer tiredness
-- **Training requirements**: Reviewers need domain expertise
-- **Availability issues**: 24/7 coverage is challenging
+- **Infrastructure needs**: Requires vector databases and storage
+- **Processing overhead**: Embedding and indexing costs
+- **Retrieval quality**: Dependent on chunking and matching
+- **Context limitations**: Retrieved chunks may lack context
+- **Latency**: Additional retrieval step adds delay
+- **Maintenance**: Knowledge base needs regular updates
+- **Relevance challenges**: May retrieve irrelevant information
 
 ## Real-World Examples
 
-1. **Content Moderation Platform**:
-   - AI flags potentially problematic content
-   - Human reviewers make final decisions
-   - Complex cases escalated to senior moderators
-   - Reviewer feedback trains AI models
-   - Fatigue monitoring and rotation schedules
+1. **Enterprise Knowledge Management**:
+   - Index company policies and procedures
+   - Retrieve relevant HR guidelines
+   - Search technical documentation
+   - Access historical project data
+   - Provide sourced answers to employees
 
-2. **Loan Approval System**:
-   - AI assesses credit risk
-   - Human reviews borderline applications
-   - Large loans require manual approval
-   - Explanations provided for denials
-   - Audit trail for compliance
+2. **Legal Research Platform**:
+   - Index case law and statutes
+   - Retrieve relevant precedents
+   - Search legal commentary
+   - Find similar cases
+   - Generate briefs with citations
 
-3. **Medical Imaging Analysis**:
-   - AI detects potential abnormalities
-   - Radiologist confirms diagnoses
-   - Critical findings prioritized for review
-   - Second opinions for complex cases
-   - Continuous learning from corrections
+3. **Medical Information System**:
+   - Index medical literature
+   - Retrieve treatment guidelines
+   - Search drug interactions
+   - Access clinical trials data
+   - Provide evidence-based recommendations
 
-4. **Resume Screening**:
-   - AI filters initial applications
-   - HR reviews shortlisted candidates
-   - Diversity checks by humans
-   - Feedback improves screening algorithms
-   - Final interviews always human-led
+4. **Academic Research Assistant**:
+   - Index research papers
+   - Retrieve relevant studies
+   - Search across disciplines
+   - Find citation networks
+   - Generate literature reviews
 
-5. **Translation Quality Control**:
-   - AI performs initial translation
-   - Human linguists review and edit
-   - Cultural sensitivity checks
-   - Technical terminology verification
-   - Style consistency enforcement
+5. **Technical Support System**:
+   - Index product documentation
+   - Retrieve troubleshooting guides
+   - Search error code databases
+   - Access configuration examples
+   - Provide solution steps with references
 
-6. **Autonomous Vehicle Monitoring**:
-   - AI handles normal driving
-   - Remote operators handle edge cases
-   - Safety driver takeover capability
-   - Incident review and analysis
-   - Continuous improvement from interventions
+6. **News Aggregation Service**:
+   - Index news articles in real-time
+   - Retrieve relevant coverage
+   - Search historical archives
+   - Find related stories
+   - Generate summaries with sources
