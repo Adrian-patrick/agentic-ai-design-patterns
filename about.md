@@ -1,88 +1,88 @@
-# Planning Pattern
+# Inter-Agent Communication (A2A) Pattern
 
 ## When to Use
 
-- **Complex multi-step projects**: When tasks have multiple dependencies and phases
-- **Goal-oriented workflows**: When working toward specific, measurable objectives
-- **Resource-constrained operations**: When managing budgets, time, or computational limits
-- **Uncertain environments**: When adaptability to changing conditions is needed
-- **Collaborative tasks**: When coordinating multiple agents or tools
-- **Long-running processes**: When tasks span extended timeframes
+- **Complex workflows**: Tasks requiring multiple specialized agents
+- **Modular systems**: Building composable agent architectures
+- **Distributed processing**: Agents running in different locations
+- **Scalable architectures**: Systems that need to grow
+- **Collaborative tasks**: Agents working together on problems
+- **Service-oriented design**: Agents as microservices
 
 ## Where It Fits
 
-- **Project management automation**: Breaking down projects into executable tasks
-- **Software development**: Planning features from requirements to deployment
-- **Research projects**: Organizing literature review, experimentation, and analysis
-- **Content production**: Planning multi-part content series or campaigns
-- **Business process automation**: Orchestrating complex business workflows
+- **Enterprise automation**: Coordinating business process agents
+- **Research systems**: Agents collaborating on analysis
+- **Content production**: Pipeline of content creation agents
+- **Trading systems**: Agents coordinating financial decisions
+- **Smart city systems**: IoT and service agents communicating
 
 ## Pros
 
-- **Strategic execution**: Transforms reactive agents into proactive planners
-- **Dependency management**: Handles complex task interdependencies
-- **Resource optimization**: Allocates resources efficiently across steps
-- **Adaptability**: Can adjust plans based on new information
-- **Progress visibility**: Clear tracking of milestone completion
-- **Risk mitigation**: Early identification of blockers and issues
-- **Reusability**: Plans can be templated and reused
+- **Modularity**: Clear separation of agent responsibilities
+- **Scalability**: Easy to add new agents to the system
+- **Flexibility**: Different communication patterns available
+- **Fault isolation**: Agent failures don't crash system
+- **Reusability**: Agents can be reused in different workflows
+- **Debugging support**: Message tracing aids troubleshooting
+- **Parallel processing**: Agents can work simultaneously
 
 ## Cons
 
-- **Upfront overhead**: Planning phase adds initial latency
-- **Rigidity risk**: Over-planning can reduce flexibility
-- **Complexity**: Managing plan state and dependencies is challenging
-- **Prediction errors**: Initial plans may be based on incorrect assumptions
-- **Replanning costs**: Adjusting plans mid-execution can be expensive
-- **Context limitations**: Long plans may exceed context windows
-- **Coordination overhead**: Managing multiple agents increases complexity
+- **Complexity overhead**: Communication protocols add complexity
+- **Latency accumulation**: Message passing adds delays
+- **Coordination challenges**: Managing agent interactions
+- **Debugging difficulty**: Tracing distributed conversations
+- **State management**: Maintaining consistency across agents
+- **Network dependencies**: Vulnerable to communication failures
+- **Security concerns**: Inter-agent authentication needed
 
 ## Real-World Examples
 
-1. **Software Feature Development**:
-   - Requirements analysis and design
-   - Development task breakdown
-   - Testing strategy planning
-   - Deployment scheduling
-   - Documentation preparation
-   - Rollback planning
+1. **E-commerce Order Processing**:
+   - Inventory Agent checks stock availability
+   - Pricing Agent calculates total costs
+   - Payment Agent processes transactions
+   - Shipping Agent arranges delivery
+   - Notification Agent updates customer
+   - Orchestrator coordinates entire flow
 
-2. **Marketing Campaign Execution**:
-   - Market research and analysis
-   - Content creation schedule
-   - Channel selection and timing
-   - Budget allocation
-   - Performance monitoring setup
-   - A/B testing plans
+2. **News Production Pipeline**:
+   - Crawler Agent gathers news sources
+   - Fact-Check Agent verifies information
+   - Writer Agent creates articles
+   - Editor Agent reviews content
+   - Publisher Agent posts to CMS
+   - Analytics Agent tracks performance
 
-3. **Academic Research Project**:
-   - Literature review planning
-   - Hypothesis formulation
-   - Experiment design
-   - Data collection schedule
-   - Analysis methodology
-   - Publication timeline
+3. **Financial Analysis Platform**:
+   - Data Agent collects market information
+   - Technical Agent performs chart analysis
+   - Fundamental Agent analyzes financials
+   - Risk Agent assesses portfolio exposure
+   - Report Agent generates recommendations
+   - Compliance Agent ensures regulations
 
-4. **Data Migration Project**:
-   - Data audit and mapping
-   - Schema design
-   - Migration script development
-   - Testing phases
-   - Rollout schedule
-   - Validation checkpoints
+4. **Smart Manufacturing System**:
+   - Sensor Agents monitor equipment
+   - Quality Agents check production
+   - Maintenance Agents schedule repairs
+   - Inventory Agents manage supplies
+   - Planning Agents optimize schedules
+   - Control Agent coordinates operations
 
-5. **Product Launch Planning**:
-   - Development milestones
-   - Marketing preparation
-   - Sales enablement
-   - Support documentation
-   - Launch event coordination
-   - Post-launch monitoring
+5. **Healthcare Coordination**:
+   - Triage Agent assesses symptoms
+   - Diagnostic Agent suggests tests
+   - Specialist Agents provide expertise
+   - Treatment Agent recommends therapy
+   - Pharmacy Agent manages medications
+   - Scheduler Agent books appointments
 
-6. **Compliance Audit Preparation**:
-   - Requirement identification
-   - Document gathering
-   - Gap analysis
-   - Remediation planning
-   - Review scheduling
-   - Report generation
+6. **Research Collaboration Platform**:
+   - Literature Agent searches papers
+   - Data Agent manages datasets
+   - Analysis Agent runs experiments
+   - Visualization Agent creates charts
+   - Writing Agent drafts reports
+   - Review Agent checks quality

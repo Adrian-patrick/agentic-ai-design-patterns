@@ -1,52 +1,61 @@
 graph TD
-    Start[Goal Input] --> Decompose[Decompose into Milestones]
-    Decompose --> Map[Create Dependency Graph]
+    Start[Multiple AI Agents Need to Talk] --> Choose{How Should They Communicate?}
     
-    Map --> Constraints{Check Constraints}
-    Constraints --> Data[Data Availability]
-    Constraints --> Auth[Authorization Check]
-    Constraints --> Budget[Budget Limits]
-    Constraints --> Time[Deadlines/SLAs]
+    Choose -->|One Boss| Manager[One Agent Manages Others]
+    Choose -->|Everyone Equal| Direct[Agents Talk Directly]
+    Choose -->|Post Office| Mailbox[Central Message System]
     
-    Data --> Plan[Generate Step-by-Step Plan]
-    Auth --> Plan
-    Budget --> Plan
-    Time --> Plan
+    Manager --> Setup[Set Up Communication Rules]
+    Direct --> Setup
+    Mailbox --> Setup
     
-    Plan --> Assign[Assign Agent/Tool per Step]
-    Assign --> Step1[Execute Step 1]
+    Setup --> Rules[Message Rules]
+    Rules --> Track[Tracking Number for Each Message]
+    Rules --> Expire[Messages Expire After Time Limit]
+    Rules --> Important[Mark Important Messages]
     
-    Step1 --> Check1{Checkpoint}
-    Check1 -->|Success| Step2[Execute Step 2]
-    Check1 -->|Blocked| Analyze[Analyze Blocker]
+    Track --> Check{Check Who Can Talk}
+    Expire --> Check
+    Important --> Check
     
-    Step2 --> Check2{Checkpoint}
-    Check2 -->|Success| Step3[Execute Step 3]
-    Check2 -->|Issue| Analyze
+    Check --> Verify[Verify Agent Identity]
+    Verify --> Permission[Check What They Can Do]
+    Permission --> Allow[Allow Communication]
     
-    Step3 --> Check3{Checkpoint}
-    Check3 -->|Success| StepN[Execute Step N]
-    Check3 -->|Problem| Analyze
+    Allow --> Send[Send Message]
+    Send --> Deliver[Deliver to Right Agent]
     
-    Analyze --> NewInfo{New Information?}
-    NewInfo -->|Yes| Replan[Adjust Plan]
-    NewInfo -->|No| Escalate[Escalate Issue]
+    Deliver --> Receive[Agent Gets Message]
+    Receive --> Process[Process Message]
     
-    Replan --> Assign
-    Escalate --> Handle[Handle Exception]
+    Process --> Reply{Need to Reply?}
     
-    StepN --> Progress[Track Progress]
-    Progress --> Complete{Goals Met?}
+    Reply -->|Yes| Answer[Send Answer Back]
+    Reply -->|No| Log[Record Message Received]
     
-    Complete -->|Yes| Accept[Acceptance Criteria Check]
-    Complete -->|No| Analyze
+    Answer --> Watch[Monitor Conversation]
+    Log --> Watch
     
-    Accept --> PostMortem[Generate Post-Mortem]
-    Handle --> PostMortem
-    PostMortem --> End[Close Task]
+    Watch --> Problems{Any Problems?}
+    
+    Problems -->|Endless Loop| Stop[Stop the Loop]
+    Problems -->|Stuck| Fix[Unstick the Agents]
+    Problems -->|Too Long| Timeout[Cancel Old Messages]
+    Problems -->|All Good| Continue[Keep Going]
+    
+    Stop --> Alert[Alert Human]
+    Fix --> Alert
+    Timeout --> Alert
+    Continue --> Record[Save Conversation History]
+    
+    Alert --> Recover[Fix the Problem]
+    Record --> Report[Create Activity Report]
+    
+    Recover --> End[Communication Complete]
+    Report --> End
 
     style Start fill:#e1f5fe
-    style Constraints fill:#fff9c4
-    style NewInfo fill:#fff59d
-    style Complete fill:#f3e5f5
+    style Choose fill:#fff59d
+    style Check fill:#fff9c4
+    style Problems fill:#f3e5f5
     style End fill:#c8e6c9

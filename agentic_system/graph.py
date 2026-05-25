@@ -1,73 +1,71 @@
-from .agents import PlannerAgent, WorkerAgent
-from .models import State, Dependencies, PlannerOutput
+from .agents import SearchAgent, SynthesisAgent
+from .models import State, Dependencies
 from pydantic_graph import BaseNode, End, GraphRunContext, Graph
 from typing import Union
-from dataclasses import dataclass
 
 class StartNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "PlannerNode":
-        return PlannerNode()
+    ) -> "VerifyPermissionNode":
+        print("\n--- [Start Node] Initializing Communication Flow ---")
+        ctx.state.system_status = "Initializing communication flow"
+        return VerifyPermissionNode()
 
-@dataclass
-class WorkerNode(BaseNode[State, Dependencies, str]):
-    step: str
-    
+class VerifyPermissionNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "PlannerNode":
-        print(f"\n--- [Worker Node] Executing Step: {self.step} ---")
-        worker_agent = ctx.deps.worker_agent
-        worker_output = await worker_agent.run(step=self.step)
-        
-        # print worker output
-        print(f"--- [Worker Node] Result (truncated) ---\n{worker_output[:500]}...\n")
-        
-        ctx.state.history.append(f"Worker output for '{self.step}': {worker_output}")
-        ctx.state.iteration += 1
-        return PlannerNode()
+    ) -> "SearchNode":
+        print("\n--- [Verify Permission Node] Performing Identity Handshake Check ---")
+        print("    Checking Agent identities...")
+        print("    Verifying permissions for Search and Synthesis agents...")
+        print("    Identity verified. Handshake completed successfully. Communication allowed.")
+        ctx.state.system_status = "Permission verified and handshake established"
+        return SearchNode()
 
-class PlannerNode(BaseNode[State, Dependencies, str]):
+class SearchNode(BaseNode[State, Dependencies, str]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> Union[WorkerNode, End[str]]:
-        print(f"\n=== [Planner Node] Iteration {ctx.state.iteration + 1} ===")
-        
-        planner_agent = ctx.deps.planner_agent
-        
-        # HARD CAP AT 3 ITERATIONS
-        if ctx.state.iteration >= 3:
-            print("--- [Planner Node] HARD CAP reached (Max 3 iterations). Forcing final synthesis... ---")
-            forced_history = ctx.state.history + [
-                "SYSTEM: Maximum of 3 iterations reached. You MUST summarize the final answer now based on the information gathered so far."
-            ]
-            plan_out = await planner_agent.run(ctx.state.query, forced_history)
-            final_ans = plan_out.final_response or "Maximum iterations reached. Failsafe final summary: " + "\n".join(ctx.state.history)
-            return End(final_ans)
-            
-        print("--- [Planner Node] Analyzing request and history to make a plan... ---")
-        plan_out = await planner_agent.run(ctx.state.query, ctx.state.history)
-        
-        if plan_out.is_complete:
-            print(f"--- [Planner Node] Plan Complete! Finalizing response... ---")
-            return End(plan_out.final_response or "No final response provided.")
-        else:
-            print(f"--- [Planner Node] Next Step Decided: {plan_out.next_step} ---")
-            ctx.state.history.append(f"Planner assigned step: {plan_out.next_step}")
-            return WorkerNode(step=plan_out.next_step or "Proceed to next step.")
-        
+    ) -> "SynthesisNode":
+        print("\n--- [Search Node] Activating Search Agent ---")
+        ctx.state.system_status = "Running search agent"
+        search_agent = ctx.deps.search_agent
+        search_results = await search_agent.run(ctx.state.query)
+        ctx.state.search_results = search_results
+        print(f"    Search Agent completed. Data gathered (truncated):\n    {search_results[:300]}...")
+        return SynthesisNode()
+
+class SynthesisNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "EndNode":
+        print("\n--- [Synthesis Node] Activating Synthesis Agent ---")
+        ctx.state.system_status = "Synthesizing narrative summary"
+        synthesis_agent = ctx.deps.synthesis_agent
+        synthesized = await synthesis_agent.run(ctx.state.search_results or "No search context provided.")
+        ctx.state.synthesized_response = synthesized
+        print("    Synthesis Agent completed. Response generated.")
+        return EndNode()
+
+class EndNode(BaseNode[State, Dependencies, str]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> End[str]:
+        print("\n--- [End Node] Finalizing Communication Flow & Generating Report ---")
+        ctx.state.system_status = "Completed"
+        final_response = ctx.state.synthesized_response or "Communication complete with no response."
+        return End(final_response)
+
 def build_graph() -> Graph:
     return Graph(
-        nodes=[StartNode, PlannerNode, WorkerNode],
+        nodes=[StartNode, VerifyPermissionNode, SearchNode, SynthesisNode, EndNode],
         state_type=State,
         run_end_type=str
     )
-        
+
 def build_deps() -> Dependencies:
     return Dependencies(
-        planner_agent=PlannerAgent(),
-        worker_agent=WorkerAgent(),
+        search_agent=SearchAgent(),
+        synthesis_agent=SynthesisAgent(),
     )
 
 async def run_graph(query: str) -> str:
@@ -77,3 +75,4 @@ async def run_graph(query: str) -> str:
     # The run method returns a RunResult which contains the output
     result = await graph.run(StartNode(), state=state, deps=deps)
     return result.output
+

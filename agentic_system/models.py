@@ -1,18 +1,14 @@
-from typing import Any, Optional, List
-from pydantic import BaseModel
-
-class PlannerOutput(BaseModel):
-    is_complete: bool
-    next_step: Optional[str] = None
-    final_response: Optional[str] = None
+from typing import Any, Optional
+from pydantic import BaseModel, Field
 
 class State(BaseModel):
-    """The state of the agent."""
-    query : str
-    iteration: int = 0
-    history: List[str] = []
-    
+    """Memory state for the direct Inter-Agent Communication (A2A) mesh."""
+    query: str = Field(description="Original user task/query.")
+    search_results: Optional[str] = Field(default=None, description="Gathers raw web search data.")
+    synthesized_response: Optional[str] = Field(default=None, description="Compiled final summary and highlights.")
+    system_status: str = Field(default="Initializing", description="Current operations log detail.")
+
 class Dependencies(BaseModel):
-    """The dependencies of the graph."""
-    planner_agent : Any
-    worker_agent : Any
+    """Injectable dependencies for the direct peer agents."""
+    search_agent: Any
+    synthesis_agent: Any
