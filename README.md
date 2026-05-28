@@ -1,18 +1,21 @@
-# Stateful Prioritization & Preemption Pattern ⏳⚡
+# Exploration & Discovery Pattern 🔬🗺️
 
-A stateful multi-agent system demonstrating the **Prioritization Pattern** (Support Ticket Prioritizer & Stateful Orchestrator) using `pydantic-ai` and `pydantic-graph`.
+A stateful multi-agent system demonstrating the **Exploration & Discovery Pattern** (Scientific Literature Scout & Hypothesis Generator) using `pydantic-ai` and `pydantic-graph`.
 
-This architecture implements multi-factor priority scoring, task aging (starvation prevention), dynamic priority queues, and live task preemption with state progress saving when new events arrive.
+This architecture implements broad literature scouting, conceptual mapping and thematic clustering, structured multi-criteria selection (Novelty, Impact, Feasibility, Gaps), target deep-diving, and conceptual research artifact extraction.
 
 ## Project Overview
 
-This project showcases a priority-based scheduling pipeline for a **Customer Support System**:
-1. A **PrioritizerAgent** evaluates support tickets, assigning scores to Business Value (Tier), Urgency, Risk, and Effort.
-2. The orchestrator calculates the final Priority Score:  
-   $$\text{Priority} = \frac{\text{Value}}{\text{Effort}} \times \text{Urgency} \times \text{Risk}$$
-3. **Starvation Prevention (Task Aging)** is applied. Older, standard tasks waiting in the queue (>30 days) receive an **Aging Boost** (+15.0 priority score) so they are not permanently starved by newer, high-value tasks.
-4. An **Execution Loop** pops the highest priority task and executes it.
-5. **Runtime Preemption & State Saving**: If a critical new task (e.g. a premium database crash) arrives mid-run, the currently running task is preempted. The system saves its current progress state (40% complete), pushes it back to the queue, and reschedules.
+This project showcases a complete literature-mining and discovery pipeline for a **Scientific Research Assistant**:
+1. A **ScoutAgent** searches broadly across academic papers, patents, and web resources for a given research goal.
+2. A **ClusteringAgent** maps the knowledge space, grouping the scouted sources into emerged conceptual themes.
+3. A **TargetSelectorAgent** evaluates each theme against four selection criteria:
+   - **Novelty Score**: Uniqueness of the research area.
+   - **Potential Impact**: Magnitude of scientific or industrial transformation.
+   - **Feasibility**: Practical viability versus science-fiction speculation.
+   - **Knowledge Gaps**: Extent of unexplored territory in the field.
+4. The system ranks the themes and selects the highest-scoring target.
+5. A **DeepDiveSpecialistAgent** executes a deep investigation into the target and extracts structured research artifacts: **Research Notes (Conceptual Models)**, **Curated Bibliographies**, and **Formulated Testable Hypotheses**.
 
 ### Architectural Workflow
 
@@ -20,33 +23,29 @@ The workflow is managed via a stateful, cost-tracking node graph:
 
 ```mermaid
 graph TD
-    StartNode[Start Node] --> PrioritizeNode[Prioritize Node]
-    PrioritizeNode --> DispatchNode[Dispatch Node]
-    DispatchNode --> MonitorNode[Monitor Node]
-    MonitorNode -->|Preemption Triggered| PrioritizeNode
-    MonitorNode -->|No Preemption| ExecuteNode[Execute Node]
-    ExecuteNode --> CompleteNode[Complete Node]
-    CompleteNode --> DispatchNode
-    DispatchNode -->|Queue Empty| EndNode[End Node]
+    StartNode[Research Goal] --> ScoutNode[Scout Broadly]
+    ScoutNode --> ClusterNode[Cluster Themes]
+    ClusterNode --> SelectNode[Select Deep-Dive Target]
+    SelectNode --> DeepDiveNode[Deep Investigation]
+    DeepDiveNode --> EndNode[Generate Report]
 
-    subgraph "Scoring & Queuing"
-        PrioritizeNode
-        DispatchNode
+    subgraph "Divergent Exploration"
+        ScoutNode
+        ClusterNode
     end
 
-    subgraph "Execution & Preemption"
-        MonitorNode
-        ExecuteNode
+    subgraph "Convergent Discovery"
+        SelectNode
+        DeepDiveNode
     end
 ```
 
-1. **StartNode**: Initializes the support ticket queue.
-2. **PrioritizeNode**: Performs structured priority evaluations and applies **Task Aging** score boosts. Sorts the queue in descending score order.
-3. **DispatchNode**: Pops the top-priority ticket from the queue.
-4. **MonitorNode**: Simulates runtime events. Checks if the incoming ticket has a higher score than the running task. If yes, preempts the running task, saves its progress (40%), returns both to the queue, and routes to `PrioritizeNode`.
-5. **ExecuteNode**: Resolves the running ticket using the support agent, completing it to 100% progress.
-6. **CompleteNode**: Moves the ticket to the completed archive.
-7. **EndNode**: Formats and outputs the **Stateful Priority Queue & Dispatch Audit Report**.
+1. **StartNode**: Sets the scientific research goal or technological scouting topic.
+2. **ScoutNode**: Broadly scouts sources (academic articles, patent records, research briefs) and saves key findings to `State.sources`.
+3. **ClusterNode**: Concepts-maps and organizes the sources into emerged thematic groups, grouping associated articles together.
+4. **SelectNode**: Evaluates all themes on Novelty, Impact, Feasibility, and Gaps. Selects the highest-rated theme for investigation.
+5. **DeepDiveNode**: Conducts deep investigation into the selected theme, formulating testable scientific hypotheses and compiling a reference bibliography.
+6. **EndNode**: Formats and outputs the **Scientific Discovery & Technology Scouting Report**.
 
 ## Technology Stack
 
@@ -56,12 +55,12 @@ graph TD
 
 ## Project Structure
 
-- `main.py`: Entry point running the queue, injecting a preemption event, and logging results.
+- `main.py`: Entry point running the showcase on next-generation battery chemistries beyond Lithium-ion.
 - `agentic_system/`:
-    - `graph.py`: Defines the 7-node state graph (Start ➡️ Prioritize ➡️ Dispatch ➡️ Monitor ➡️ Execute ➡️ Complete ➡️ End).
-    - `agents.py`: Implementations for the `PrioritizerAgent` and `SupportWorkerAgent`.
-    - `models.py`: Shared memory `State` (ticket queue, running task, completed tasks, logs) and dependencies, including the `SupportTicket` and `PriorityScoreCard` structures.
-    - `prompts.py`: Optimized system prompts for prioritizer and support worker.
+    - `graph.py`: Defines the 6-node state graph (Start ➡️ Scout ➡️ Cluster ➡️ Select ➡️ DeepDive ➡️ End).
+    - `agents.py`: Implementations for the `ScoutAgent`, `ClusteringAgent`, `TargetSelectorAgent`, and `DeepDiveSpecialistAgent`.
+    - `models.py`: Shared memory `State` (sources, themes, evaluations, artifacts) and dependencies, including the `ScoutedSource`, `ClusteredTheme`, `ThemeEvaluation`, and `DeepDiveArtifacts` structures.
+    - `prompts.py`: Optimized system prompts for scouting, clustering, selection, and deep investigation.
     - `config.py`: Azure OpenAI configuration.
 
 ## Getting Started
@@ -78,7 +77,7 @@ AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=gpt-5-mini
 *Note: If no Azure credentials are configured, the system gracefully falls back to high-fidelity offline mock execution to demonstrate the flow immediately.*
 
 ### 2. Installation & Run
-Run the prioritization showcases with `uv`:
+Run the discovery showcases with `uv`:
 ```bash
 uv run main.py
 ```
