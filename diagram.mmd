@@ -1,71 +1,72 @@
 graph TD
-    Start[Task Request] --> Analyze[Analyze Complexity]
+    Start[Hard Problem to Solve] --> Choose{Pick Best Way to Think}
     
-    Analyze --> Budget{Set Budgets}
+    Choose -->|Step by Step| StepByStep[Think Through Each Step]
+    Choose -->|Explore Options| Tree[Explore Different Paths]
+    Choose -->|Double Check| Multiple[Try Multiple Ways]
+    Choose -->|Debate It| Debate[Argue Both Sides]
+    Choose -->|Think and Do| ThinkDo[Think Then Act, Repeat]
     
-    Budget --> Token[Token Limits]
-    Budget --> Time[Time Constraints]
-    Budget --> Cost[Money Budget]
+    StepByStep --> Steps[Break Into Steps]
+    Steps --> Think1[Step 1: First Thought]
+    Think1 --> Think2[Step 2: Next Thought]
+    Think2 --> Think3[Step 3: Final Thought]
     
-    Token --> Router[Router Agent]
-    Time --> Router
-    Cost --> Router
+    Tree --> Branch[Create Different Ideas]
+    Branch --> Explore[Explore Each Path]
+    Explore --> Compare[Compare Options]
+    Compare --> Remove[Remove Bad Paths]
     
-    Router --> Classify{Classify Complexity}
+    Multiple --> Make[Make Several Solutions]
+    Make --> Path1[Solution Method 1]
+    Make --> Path2[Solution Method 2]
+    Make --> Path3[Solution Method 3]
     
-    Classify -->|Simple| Cheap[Use Small Model]
-    Classify -->|Medium| Standard[Use Standard Model]
-    Classify -->|Complex| Premium[Use Advanced Model]
-    Classify -->|Unknown| Test[Run Quick Test]
+    Debate --> For[Arguments For]
+    Debate --> Against[Arguments Against]
+    For --> Discuss[Compare Arguments]
+    Against --> Discuss
     
-    Test --> Confidence{Check Confidence}
+    ThinkDo --> Think[Think About It]
+    Think --> Act[Take Action]
+    Act --> See[See What Happens]
+    See --> Think
     
-    Confidence -->|Low| Escalate[Escalate to Better Model]
-    Confidence -->|High| Proceed[Continue with Current]
+    Think3 --> Grade[Grade Solutions]
+    Remove --> Grade
+    Path1 --> Grade
+    Path2 --> Grade
+    Path3 --> Grade
+    Discuss --> Grade
     
-    Cheap --> Execute[Execute Task]
-    Standard --> Execute
-    Premium --> Execute
-    Escalate --> Execute
-    Proceed --> Execute
+    Grade --> Test{Test Against Standards}
     
-    Execute --> Monitor[Monitor Resources]
+    Test --> Check[Check Logic]
+    Check --> Verify[Verify It Works]
+    Verify --> Rank[Rank Best to Worst]
     
-    Monitor --> Track{Track Usage}
+    Rank --> Pick{Pick Winner}
     
-    Track --> Tokens[Token Count]
-    Track --> Latency[Response Time]
-    Track --> Costs[API Costs]
+    Pick -->|One Best| UseBest[Use Best Solution]
+    Pick -->|Several Good| Combine[Combine Good Parts]
     
-    Tokens --> Check{Within Limits?}
-    Latency --> Check
-    Costs --> Check
+    UseBest --> Limit{Too Many Steps?}
+    Combine --> Limit
     
-    Check -->|Yes| Continue[Continue Processing]
-    Check -->|No| Optimize[Optimization Needed]
+    Limit -->|OK| Continue[Keep Going]
+    Limit -->|Too Many| Trim[Remove Extra Steps]
     
-    Optimize --> Prune[Prune Context]
-    Optimize --> Cache[Use Cached Results]
-    Optimize --> Downgrade[Switch to Cheaper Model]
+    Continue --> Save[Save the Work]
+    Trim --> Save
     
-    Prune --> Retry[Retry Operation]
-    Cache --> Retry
-    Downgrade --> Retry
+    Save --> Keep[Keep for Later Use]
+    Keep --> CanReuse[Can Use Again]
     
-    Continue --> Complete[Task Complete]
-    Retry --> Monitor
-    
-    Complete --> Measure[Measure Quality/Cost]
-    Measure --> Delta[Calculate Delta]
-    
-    Delta --> Tune[Tune Thresholds]
-    Tune --> Learn[Update Router Logic]
-    
-    Learn --> Report[Generate Report]
-    Report --> End[Optimized Execution]
+    CanReuse --> Answer[Final Solution]
+    Answer --> End[Problem Solved]
 
     style Start fill:#e1f5fe
-    style Classify fill:#fff59d
-    style Check fill:#fff9c4
-    style Delta fill:#f3e5f5
+    style Choose fill:#fff59d
+    style Test fill:#fff9c4
+    style Pick fill:#f3e5f5
     style End fill:#c8e6c9

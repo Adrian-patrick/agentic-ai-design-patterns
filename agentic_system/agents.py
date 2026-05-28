@@ -1,11 +1,11 @@
 import os
-from pydantic import BaseModel, Field
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent
 from .config import create_model
+from .models import LogicalCheck, PointRating, Verdict
 from .prompts import (
-    router_system_prompt,
-    low_cost_system_prompt,
-    high_cost_system_prompt,
+    proponent_system_prompt,
+    opponent_system_prompt,
+    judge_system_prompt,
 )
 
 # Check if Azure OpenAI API key is provided
@@ -16,73 +16,82 @@ IS_CONFIGURED = all(
 if not IS_CONFIGURED:
     print("[Info] Azure credentials not found. Falling back to local high-fidelity mock agents for showcase...")
 
-class ComplexityClassification(BaseModel):
-    complexity: str = Field(description="Must be either 'simple' or 'complex'")
-    reason: str = Field(description="Brief reason for classification")
-
-class RouterAgent:
-    """Specialized agent to classify task complexity and decide resource routing."""
+class ProponentAgent:
+    """Specialized agent arguing FOR the thesis/topic."""
     def __init__(self):
         if IS_CONFIGURED:
             self.agent = Agent(
                 model=create_model(),
-                system_prompt=router_system_prompt,
-                output_type=ComplexityClassification,
+                system_prompt=proponent_system_prompt,
                 retries=3,
             )
 
-    async def run(self, query: str) -> ComplexityClassification:
+    async def run(self, topic: str) -> str:
         if not IS_CONFIGURED:
-            # High-fidelity mock complexity detection
-            print("   [Router Agent] Simulating offline complexity classification...")
-            # Detect based on keywords or length
-            is_simple = any(kw in query.lower() for kw in ["calculate", "hello", "hi", "what is", "*", "+", "-", "/"]) or len(query) < 40
-            if is_simple:
-                return ComplexityClassification(
-                    complexity="simple",
-                    reason="Query is a brief factual, conversational, or mathematical request suitable for low-cost."
-                )
-            else:
-                return ComplexityClassification(
-                    complexity="complex",
-                    reason="Query requires analytical, multi-perspective elaboration suitable for high-cost reasoning."
-                )
-
-        result = await self.agent.run(f"Task query to classify: {query}")
+            print("   [Proponent Agent] Simulating offline FOR argument generation...")
+            return (
+                "1. Existential Risk: Artificial General Intelligence (AGI) possesses capabilities that, if unchecked, could lead to human extinction. Regulating early ensures safety boundaries.\n"
+                "2. Alignment Problem: Ensuring AGI goals align with human values is an unsolved mathematical problem. Regulatory oversight forces mandatory safety alignment testing.\n"
+                "3. Social Stability: Unregulated AGI will cause sudden, massive labor displacement and economic inequality that could collapse modern social security networks."
+            )
+        result = await self.agent.run(f"Construct arguments FOR this topic: {topic}")
         return result.output
 
-class ExecutionAgent:
-    """Specialized agent to run the task using the optimized model tier persona."""
+class OpponentAgent:
+    """Specialized agent arguing AGAINST the thesis/topic."""
     def __init__(self):
-        pass
+        if IS_CONFIGURED:
+            self.agent = Agent(
+                model=create_model(),
+                system_prompt=opponent_system_prompt,
+                retries=3,
+            )
 
-    async def run(self, query: str, complexity: str) -> str:
+    async def run(self, topic: str) -> str:
         if not IS_CONFIGURED:
-            print(f"   [Execution Agent] Simulating offline {complexity}-tier execution...")
-            if complexity == "simple":
-                # Concise 1-sentence answer
-                return "The result of the calculation 5 * 12 + 10 is 70."
-            else:
-                # Thorough structured essay analysis
-                return (
-                    "PROS OF STANDARDIZING GLOBAL TAXATION:\n"
-                    "1. Prevents Profit Shifting: Multi-national corporations cannot shift profits to tax havens.\n"
-                    "2. Level Playing Field: Promotes fair competition across different sized nations.\n\n"
-                    "CONS OF STANDARDIZING GLOBAL TAXATION:\n"
-                    "1. Loss of Sovereign Autonomy: Individual nations lose the power to set competitive tax rates.\n"
-                    "2. Barriers to Developing Nations: Small economies cannot use tax incentives to attract foreign direct investments.\n\n"
-                    "ECONOMIC IMPACTS:\n"
-                    "Standardization would redistribute global tax revenues, resulting in estimated gains of $150B annually for large consumer nations, but could lead to severe capital flight from small investment-driven economies."
-                )
-
-        # Dynamic agent creation to use the appropriate prompt based on model selection
-        system_prompt = low_cost_system_prompt if complexity == "simple" else high_cost_system_prompt
-        agent = Agent(
-            model=create_model(),
-            system_prompt=system_prompt,
-            retries=3,
-        )
-
-        result = await agent.run(query)
+            print("   [Opponent Agent] Simulating offline AGAINST argument generation...")
+            return (
+                "1. Stifling Innovation: Heavy global regulation creates regulatory capture, leaving only massive corporations in control and halting open-source breakthroughs.\n"
+                "2. Geopolitical Arbitrage: If democratic nations heavily regulate AGI, non-democratic states will ignore the rules, leading to a major strategic security deficit.\n"
+                "3. Premature Rules: We do not yet understand AGI architectures. Setting hard rules today will regulate hypothetical science-fiction risks rather than actual near-term issues."
+            )
+        result = await self.agent.run(f"Construct arguments AGAINST this topic: {topic}")
         return result.output
 
+class JudgeAgent:
+    """Specialized agent analyzing, grading, ranking, and synthesizing the final verdict."""
+    def __init__(self):
+        if IS_CONFIGURED:
+            self.agent = Agent(
+                model=create_model(),
+                system_prompt=judge_system_prompt,
+                output_type=Verdict,
+                retries=3,
+            )
+
+    async def run(self, topic: str, arguments_for: str, arguments_against: str) -> Verdict:
+        if not IS_CONFIGURED:
+            print("   [Judge Agent] Simulating offline verdict synthesis...")
+            return Verdict(
+                logical_checks=[
+                    LogicalCheck(side="FOR", fallacy_or_weakness="Relies heavily on speculative future existential risk scenarios."),
+                    LogicalCheck(side="AGAINST", fallacy_or_weakness="Assumes regulation necessarily halts innovation rather than shaping it safely.")
+                ],
+                point_ratings=[
+                    PointRating(point="Geopolitical Arbitrage (Opponent)", side="AGAINST", strength_rank=1),
+                    PointRating(point="Alignment Problem (Proponent)", side="FOR", strength_rank=2),
+                    PointRating(point="Stifling Innovation (Opponent)", side="AGAINST", strength_rank=3),
+                    PointRating(point="Existential Risk (Proponent)", side="FOR", strength_rank=4)
+                ],
+                synthesis=(
+                    "A balanced synthesis recommends a 'Phased Safe Harbor' model: regulate the direct deployments of highly high-risk physical-world interfaces (like defense or power grids) while maintaining wide freedom, tax incentives, and lightweight sandbox environments for foundational research and open-source models."
+                )
+            )
+
+        prompt = (
+            f"Topic: {topic}\n\n"
+            f"Arguments FOR:\n{arguments_for}\n\n"
+            f"Arguments AGAINST:\n{arguments_against}"
+        )
+        result = await self.agent.run(prompt)
+        return result.output

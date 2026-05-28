@@ -1,109 +1,113 @@
-from .agents import RouterAgent, ExecutionAgent
-from .models import State, Dependencies
+from .agents import ProponentAgent, OpponentAgent, JudgeAgent
+from .models import State, Dependencies, Verdict
 from pydantic_graph import BaseNode, End, GraphRunContext, Graph
 
-class StartNode(BaseNode[State, Dependencies, str]):
+class StartNode(BaseNode[State, Dependencies, Verdict]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "RouterNode":
-        print("\n--- [Start Node] Initializing Resource-Aware Processing Pipeline ---")
+    ) -> "ForNode":
+        print("\n--- [Start Node] Initializing Dialectical Debate Pipeline ---")
         ctx.state.system_status = "Pipeline initialized"
-        return RouterNode()
+        return ForNode()
 
-class RouterNode(BaseNode[State, Dependencies, str]):
+class ForNode(BaseNode[State, Dependencies, Verdict]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> "ExecutionNode":
-        print("\n--- [Router Node] Analyzing Query Complexity & Budget Requirements ---")
-        ctx.state.system_status = "Analyzing query complexity"
+    ) -> "AgainstNode":
+        print(f"\n--- [For Node] Invoking Proponent Agent (Arguments FOR) ---")
+        ctx.state.system_status = "Generating arguments FOR the thesis"
         
-        router_agent = ctx.deps.router_agent
-        classification = await router_agent.run(ctx.state.query)
+        proponent_agent = ctx.deps.proponent_agent
+        arguments_for = await proponent_agent.run(ctx.state.topic)
+        ctx.state.arguments_for = arguments_for
         
-        ctx.state.complexity = classification.complexity
-        ctx.state.selected_model = "Low-Cost Model" if classification.complexity == "simple" else "High-Cost Model"
-        
-        print(f"    Classified Complexity: '{classification.complexity.upper()}'")
-        print(f"    Reasoning: {classification.reason}")
-        print(f"    Resource Allocation: Routed to '{ctx.state.selected_model}'")
-        
-        ctx.state.system_status = f"Query classified as {classification.complexity}, routing to {ctx.state.selected_model}"
-        return ExecutionNode()
+        print("    [Proponent Agent] Arguments generated successfully.")
+        return AgainstNode()
 
-class ExecutionNode(BaseNode[State, Dependencies, str]):
+class AgainstNode(BaseNode[State, Dependencies, Verdict]):
+    async def run(
+        self, ctx: GraphRunContext[State, Dependencies]
+    ) -> "DiscussNode":
+        print(f"\n--- [Against Node] Invoking Opponent Agent (Arguments AGAINST) ---")
+        ctx.state.system_status = "Generating arguments AGAINST the thesis"
+        
+        opponent_agent = ctx.deps.opponent_agent
+        arguments_against = await opponent_agent.run(ctx.state.topic)
+        ctx.state.arguments_against = arguments_against
+        
+        print("    [Opponent Agent] Arguments generated successfully.")
+        return DiscussNode()
+
+class DiscussNode(BaseNode[State, Dependencies, Verdict]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
     ) -> "EndNode":
-        print(f"\n--- [Execution Node] Invoking {ctx.state.selected_model} ---")
-        ctx.state.system_status = f"Executing using {ctx.state.selected_model}"
+        print("\n--- [Discuss Node] Invoking Judge Agent (Synthesis & Verdict) ---")
+        ctx.state.system_status = "Synthesizing and evaluating arguments"
         
-        execution_agent = ctx.deps.execution_agent
-        response = await execution_agent.run(ctx.state.query, ctx.state.complexity or "simple")
-        ctx.state.execution_response = response
+        judge_agent = ctx.deps.judge_agent
+        verdict = await judge_agent.run(
+            ctx.state.topic, 
+            ctx.state.arguments_for or "", 
+            ctx.state.arguments_against or ""
+        )
+        ctx.state.verdict = verdict
         
-        # Calculate illustrative tokens and costs
-        if ctx.state.complexity == "simple":
-            # Low cost model pricing
-            input_tokens = len(ctx.state.query.split()) * 1.3
-            output_tokens = len(response.split()) * 1.3
-            actual_cost = (input_tokens * 0.0005 + output_tokens * 0.0015) / 1000
-            high_cost_baseline = (input_tokens * 0.0050 + output_tokens * 0.0150) / 1000
-            savings = high_cost_baseline - actual_cost
-        else:
-            # High cost model pricing
-            input_tokens = len(ctx.state.query.split()) * 1.3
-            output_tokens = len(response.split()) * 1.3
-            actual_cost = (input_tokens * 0.0050 + output_tokens * 0.0150) / 1000
-            savings = 0.00
-            
-        ctx.state.estimated_cost = actual_cost
-        ctx.state.estimated_savings = savings
-        
-        print(f"    Response generated successfully. (Tokens processed: Input ~{int(input_tokens)}, Output ~{int(output_tokens)})")
+        ctx.state.system_status = "Verdict successfully generated"
+        print("    [Judge Agent] Argument analysis & synthesis complete.")
         return EndNode()
 
-class EndNode(BaseNode[State, Dependencies, str]):
+class EndNode(BaseNode[State, Dependencies, Verdict]):
     async def run(
         self, ctx: GraphRunContext[State, Dependencies]
-    ) -> End[str]:
-        print("\n--- [End Node] Finalizing Optimization Report ---")
+    ) -> End[Verdict]:
+        print("\n--- [End Node] Finalizing Debate Execution & Verification Report ---")
         ctx.state.system_status = "Execution completed"
         
-        print(f"    [Cost Metrics]")
-        print(f"    - Model Used:      {ctx.state.selected_model}")
-        print(f"    - Estimated Cost:  ${ctx.state.estimated_cost:.6f} USD")
-        print(f"    - Total Savings:   ${ctx.state.estimated_savings:.6f} USD")
+        verdict = ctx.state.verdict
+        if not verdict:
+            raise ValueError("Verdict not found in state when executing EndNode")
+            
+        print("\n" + "="*60)
+        print("DEBATE ANALYSIS AND JUDGE VERDICT REPORT")
+        print("="*60)
+        print(f"Topic: \"{ctx.state.topic}\"\n")
         
-        final_report = (
-            f"=== Resource Optimization Report ===\n"
-            f"Query: \"{ctx.state.query}\"\n"
-            f"Complexity Classification: {ctx.state.complexity.upper()}\n"
-            f"Allocated Resource: {ctx.state.selected_model}\n"
-            f"Estimated Run Cost: ${ctx.state.estimated_cost:.6f} USD\n"
-            f"Estimated Savings (vs. Max Model): ${ctx.state.estimated_savings:.6f} USD\n"
-            f"------------------------------------\n"
-            f"Response:\n{ctx.state.execution_response}"
-        )
-        return End(final_report)
+        print("LOGICAL ERROR/WEAKNESS CHECK:")
+        for check in verdict.logical_checks:
+            print(f"  - [{check.side}]: {check.fallacy_or_weakness}")
+        print()
+        
+        print("RANKED & RATED ARGUMENTS:")
+        # Sort by strength rank (lowest number is strongest)
+        sorted_points = sorted(verdict.point_ratings, key=lambda x: x.strength_rank)
+        for rank, item in enumerate(sorted_points, 1):
+            print(f"  {rank}. [{item.side} - Strength Rank {item.strength_rank}] {item.point}")
+        print()
+        
+        print("FINAL SYNTHESIS AND COMPROMISE:")
+        print(verdict.synthesis)
+        print("="*60 + "\n")
+        
+        return End(verdict)
 
 def build_graph() -> Graph:
     return Graph(
-        nodes=[StartNode, RouterNode, ExecutionNode, EndNode],
+        nodes=[StartNode, ForNode, AgainstNode, DiscussNode, EndNode],
         state_type=State,
-        run_end_type=str
+        run_end_type=Verdict
     )
 
 def build_deps() -> Dependencies:
     return Dependencies(
-        router_agent=RouterAgent(),
-        execution_agent=ExecutionAgent(),
+        proponent_agent=ProponentAgent(),
+        opponent_agent=OpponentAgent(),
+        judge_agent=JudgeAgent(),
     )
 
-async def run_graph(query: str) -> str:
+async def run_graph(topic: str) -> Verdict:
     graph = build_graph()
     deps = build_deps()
-    state = State(query=query)
+    state = State(topic=topic)
     result = await graph.run(StartNode(), state=state, deps=deps)
     return result.output
-
-
