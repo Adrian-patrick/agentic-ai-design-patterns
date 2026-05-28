@@ -1,88 +1,88 @@
-# Evaluation and Monitoring Pattern
+# Guardrails/Safety Patterns
 
 ## When to Use
 
-- **Production systems**: Any system requiring reliability
-- **Quality assurance**: Ensuring consistent performance
-- **Compliance requirements**: Meeting regulatory standards
-- **Performance optimization**: Identifying bottlenecks
-- **Cost management**: Tracking resource usage
-- **Continuous improvement**: Data-driven optimization
+- **Public-facing systems**: Protecting users from harmful content
+- **Regulated industries**: Ensuring compliance with laws
+- **Brand protection**: Maintaining company reputation
+- **Data privacy**: Protecting sensitive information
+- **Security requirements**: Preventing system exploitation
+- **Ethical AI**: Ensuring responsible AI behavior
 
 ## Where It Fits
 
-- **Enterprise AI deployments**: Mission-critical systems
-- **SaaS platforms**: Multi-tenant service monitoring
-- **Healthcare systems**: Patient safety monitoring
-- **Financial services**: Trading system oversight
-- **E-commerce**: Transaction and recommendation monitoring
+- **Chatbots and assistants**: Customer-facing AI systems
+- **Content generation**: Automated content creation
+- **Healthcare AI**: Medical advice and diagnosis
+- **Financial services**: Trading and advisory systems
+- **Educational platforms**: Student-facing AI tools
 
 ## Pros
 
-- **Reliability**: Early detection of issues
-- **Performance visibility**: Clear system insights
-- **Quality assurance**: Consistent output standards
-- **Cost control**: Resource usage tracking
-- **Compliance**: Audit trail maintenance
-- **Improvement data**: Metrics guide optimization
-- **User trust**: Transparent performance metrics
+- **Risk mitigation**: Prevents harmful outputs
+- **Compliance**: Meets regulatory requirements
+- **Brand protection**: Maintains reputation
+- **User safety**: Protects from inappropriate content
+- **Security**: Prevents exploitation attempts
+- **Consistency**: Uniform safety standards
+- **Auditability**: Clear safety decision trails
 
 ## Cons
 
-- **Infrastructure overhead**: Monitoring systems require resources
-- **Complexity**: Managing multiple metrics and alerts
-- **Alert fatigue**: Too many notifications
-- **Storage costs**: Logging and metrics data
-- **Performance impact**: Instrumentation adds overhead
-- **Maintenance burden**: Keeping tests updated
-- **False positives**: Unnecessary alerts and rollbacks
+- **False positives**: May block legitimate requests
+- **Latency increase**: Safety checks add processing time
+- **User frustration**: Over-restrictive filtering
+- **Complexity**: Multiple layers of checks
+- **Maintenance burden**: Policies need regular updates
+- **Context blindness**: May miss nuanced safety issues
+- **Cost overhead**: Additional processing and monitoring
 
 ## Real-World Examples
 
-1. **E-commerce Recommendation Engine**:
-   - Click-through rate monitoring
-   - Conversion tracking
-   - A/B test evaluation
-   - Latency monitoring
-   - Cost per recommendation
-   - Drift detection in user preferences
+1. **Social Media AI Moderator**:
+   - Hate speech detection and filtering
+   - PII redaction in user posts
+   - Misinformation flagging
+   - Violence/graphic content blocking
+   - Copyright violation detection
+   - Appeal process for false positives
 
-2. **Customer Service Chatbot**:
-   - Resolution rate tracking
-   - Customer satisfaction scores
-   - Response time monitoring
-   - Escalation rate analysis
-   - Cost per interaction
-   - Quality sampling and review
+2. **Healthcare Chatbot**:
+   - Medical advice disclaimers
+   - Emergency situation detection
+   - Drug interaction warnings
+   - Privacy protection for health data
+   - Scope limitations enforcement
+   - Professional referral triggers
 
-3. **Financial Trading System**:
-   - Trade execution monitoring
-   - Slippage tracking
-   - Risk limit compliance
-   - Latency measurements
-   - Profit/loss attribution
-   - Regulatory audit logs
+3. **Financial Advisory AI**:
+   - Investment risk warnings
+   - Regulatory compliance checks
+   - Insider trading prevention
+   - Client suitability verification
+   - Market manipulation detection
+   - Audit trail maintenance
 
-4. **Content Moderation Platform**:
-   - Accuracy metrics (precision/recall)
-   - False positive rates
-   - Processing time per item
-   - Human agreement scores
-   - Cost per moderation
-   - Policy violation trends
+4. **Educational AI Tutor**:
+   - Age-appropriate content filtering
+   - Academic integrity protection
+   - Bullying/harassment prevention
+   - Personal information protection
+   - Inappropriate topic blocking
+   - Parent/teacher override options
 
-5. **Medical Diagnosis AI**:
-   - Diagnostic accuracy rates
-   - False negative monitoring
-   - Time to diagnosis
-   - Clinician agreement scores
-   - System availability metrics
-   - Patient outcome tracking
+5. **Enterprise AI Assistant**:
+   - Data classification enforcement
+   - Access control verification
+   - Confidentiality protection
+   - Compliance checking
+   - Security threat detection
+   - Activity logging and monitoring
 
-6. **Code Generation Tool**:
-   - Code quality metrics
-   - Compilation success rates
-   - Test pass rates
-   - Developer acceptance rates
-   - Generation time tracking
-   - Usage pattern analysis
+6. **Content Generation Platform**:
+   - Copyright infringement prevention
+   - Trademark protection
+   - Defamation blocking
+   - Bias detection and mitigation
+   - Fact-checking integration
+   - Quality standards enforcement

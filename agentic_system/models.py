@@ -1,34 +1,33 @@
-from typing import Any, List, Optional
+from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field
 
-class MetricSummary(BaseModel):
-    """Execution and evaluation metrics for a single code generation iteration."""
-    iteration: int = Field(description="The generation/patch iteration number.")
-    compilation_success: bool = Field(description="True if the code compiled without syntax errors.")
-    syntax_error: Optional[str] = Field(default=None, description="The compilation error message if any.")
-    test_pass_rate: float = Field(description="The percentage of unit tests that passed (0.0 to 1.0).")
-    test_failure_details: Optional[str] = Field(default=None, description="Detailed test failures if any.")
-    latency_ms: float = Field(description="Time taken to generate and test the code in milliseconds.")
-    estimated_cost: float = Field(description="Calculated token/run cost in USD.")
+class InputEvaluation(BaseModel):
+    """Structured evaluation of user input for safety and confidentiality."""
+    risk_level: Literal["low", "medium", "very_high"] = Field(description="Assessed risk level.")
+    pii_detected: bool = Field(description="True if PII like email, phone, credit card, etc., is detected.")
+    injection_detected: bool = Field(description="True if prompt injection or system hijacking is detected.")
+    redacted_input: str = Field(description="Input with PII redacted/masked, or original input if low risk.")
+    reason: str = Field(description="Explanation for the risk assessment and redacts.")
 
-class AlertInfo(BaseModel):
-    """Details about a quality gate threshold breach."""
-    gate_name: str = Field(description="The name of the gate (e.g. 'Syntax Check', 'Unit Tests', 'Latency SLA').")
-    severity: str = Field(description="Severity: WARNING or CRITICAL.")
-    message: str = Field(description="Detailed alert message.")
+class OutputEvaluation(BaseModel):
+    """Structured evaluation of assistant output against compliance policies."""
+    safe: bool = Field(description="True if the response complies with ethics, values, and legal rules.")
+    policy_violation: Optional[str] = Field(default=None, description="Detailed policy violation if unsafe.")
+    synthesis_decision: Literal["allow", "block", "edit"] = Field(description="Final action to take for the output.")
 
 class State(BaseModel):
-    """Memory state for the Evaluation & Monitoring pattern."""
-    task_name: str = Field(description="Short identifier of the coding task.")
-    prompt: str = Field(description="Instructions describing the function to write.")
-    unit_tests: List[str] = Field(description="List of Python assertion statements to run against the code.")
-    generated_code: Optional[str] = Field(default=None, description="The current generated code solution.")
-    metrics_history: List[MetricSummary] = Field(default_factory=list, description="Historical record of iteration metrics.")
-    active_alerts: List[AlertInfo] = Field(default_factory=list, description="List of generated alerts.")
-    recovered: bool = Field(default=False, description="True if a previous gate breach was successfully resolved.")
+    """Memory state for the Guardrails/Safety pattern."""
+    original_input: str = Field(description="Original user prompt.")
+    cleaned_input: Optional[str] = Field(default=None, description="Cleaned or redacted input.")
+    risk_level: str = Field(default="low", description="Evaluated input risk level.")
+    worker_output: Optional[str] = Field(default=None, description="Output from the executor agent.")
+    output_evaluation: Optional[OutputEvaluation] = Field(default=None, description="Evaluated output compliance report.")
+    final_decision: str = Field(default="allow", description="Final decision: allow, block, edit.")
+    rejection_reason: Optional[str] = Field(default=None, description="Reason for rejection if blocked.")
     system_status: str = Field(default="Initializing", description="Current operations log detail.")
 
 class Dependencies(BaseModel):
-    """Injectable dependencies for the evaluation agents."""
-    generator_agent: Any
-    corrector_agent: Any
+    """Injectable dependencies for safety agents."""
+    input_guardrail_agent: Any
+    execution_agent: Any
+    output_guardrail_agent: Any

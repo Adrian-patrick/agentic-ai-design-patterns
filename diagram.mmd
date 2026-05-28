@@ -1,84 +1,77 @@
 graph TD
-    Start[System Deployment] --> Define[Define Quality Gates]
+    Start[Someone Sends Input] --> Clean[Clean the Input]
     
-    Define --> Gates{Quality Criteria}
+    Clean --> Check{Check for Problems}
     
-    Gates --> Accuracy[Accuracy Metrics]
-    Gates --> Performance[Performance SLAs]
-    Gates --> Compliance[Compliance Rules]
-    Gates --> UX[User Experience]
+    Check --> Personal[Personal Info]
+    Check --> Attack[Hacking Attempts]
+    Check --> Bad[Harmful Content]
     
-    Accuracy --> Golden[Golden Test Sets]
-    Performance --> Benchmarks[Performance Benchmarks]
-    Compliance --> Standards[Regulatory Standards]
-    UX --> Satisfaction[Satisfaction Scores]
+    Personal --> Hide[Hide Personal Info]
+    Attack --> Block[Block the Attack]
+    Bad --> Remove[Remove Bad Content]
     
-    Golden --> Tests[Create Test Suite]
-    Benchmarks --> Tests
-    Standards --> Tests
-    Satisfaction --> Tests
+    Hide --> Risk[Check Risk Level]
+    Block --> Risk
+    Remove --> Risk
     
-    Tests --> Unit[Unit Tests]
-    Tests --> Contract[Contract Tests]
-    Tests --> Integration[Integration Tests]
-    Tests --> E2E[End-to-End Tests]
+    Risk --> Level{How Risky Is It?}
     
-    Unit --> Critical[Critical Path Tests]
-    Contract --> Critical
-    Integration --> Critical
-    E2E --> Critical
+    Level -->|Low Risk| GoAhead[Process Normally]
+    Level -->|Medium Risk| Careful[Add Limits]
+    Level -->|High Risk| Review[Need Human Review]
+    Level -->|Very High Risk| Stop[Block Completely]
     
-    Critical --> Instrument[Instrument System]
+    GoAhead --> DoWork[Do the Work]
+    Careful --> DoWork
+    Review --> Human[Human Checks It]
     
-    Instrument --> Traces[Distributed Traces]
-    Instrument --> Metrics[System Metrics]
-    Instrument --> Costs[Cost Tracking]
-    Instrument --> Latency[Latency Monitoring]
+    DoWork --> Output[Create Response]
+    Human --> Output
     
-    Traces --> Collect[Collect Data]
-    Metrics --> Collect
-    Costs --> Collect
-    Latency --> Collect
+    Output --> CheckOutput{Check the Response}
     
-    Collect --> Analyze{Analyze Patterns}
+    CheckOutput --> Rules[Check Company Rules]
+    Rules --> Ethics[Is It Ethical?]
+    Rules --> Legal[Is It Legal?]
+    Rules --> Brand[Does It Match Our Values?]
     
-    Analyze --> Drift[Detect Drift]
-    Analyze --> Regression[Find Regressions]
-    Analyze --> Anomalies[Spot Anomalies]
-    Analyze --> Trends[Identify Trends]
+    Ethics --> Score[Safety Score]
+    Legal --> Score
+    Brand --> Score
     
-    Drift --> Alert{Threshold Breach?}
-    Regression --> Alert
-    Anomalies --> Alert
-    Trends --> Alert
+    Score --> Safe{Is It Safe Enough?}
     
-    Alert -->|Yes| Notify[Alert Teams]
-    Alert -->|No| Continue[Continue Monitoring]
+    Safe -->|Yes| Limits[Check Tool Limits]
+    Safe -->|No| Pass[Allow Response]
     
-    Notify --> Investigate[Investigate Issue]
-    Investigate --> Decision{Action Required?}
+    Limits --> Protected[Use Protected Mode]
+    Protected --> Permissions[Check Permissions]
+    Permissions --> Approve[Need Approval]
     
-    Decision -->|Rollback| Revert[Revert Changes]
-    Decision -->|Fix| Patch[Deploy Fix]
-    Decision -->|Accept| Document[Document Decision]
+    Approve --> Final{Final Decision}
+    Pass --> Final
     
-    Revert --> Verify[Verify Recovery]
-    Patch --> Verify
-    Document --> Continue
+    Final -->|Allow| Send[Send to User]
+    Final -->|Change| Edit[Fix the Response]
+    Final -->|Block| Reject[Explain Why Not]
     
-    Continue --> Periodic[Periodic Audits]
-    Verify --> Periodic
+    Send --> Log[Record What Happened]
+    Edit --> Log
+    Reject --> Log
+    Stop --> Log
     
-    Periodic --> Review[Review Performance]
-    Review --> Update[Update Eval Sets]
+    Log --> Watch[Watch for Patterns]
+    Watch --> Override{Can Human Override?}
     
-    Update --> Refresh[Refresh Tests]
-    Refresh --> Improve[Continuous Improvement]
+    Override -->|Yes| Update[Update Rules]
+    Override -->|No| Learn[System Learns]
     
-    Improve --> End[System Monitored]
+    Update --> End[Safety Check Complete]
+    Learn --> End
 
     style Start fill:#e1f5fe
-    style Gates fill:#fff59d
-    style Analyze fill:#fff9c4
-    style Decision fill:#f3e5f5
+    style Level fill:#ffccbc
+    style CheckOutput fill:#fff59d
+    style Final fill:#fff9c4
     style End fill:#c8e6c9
