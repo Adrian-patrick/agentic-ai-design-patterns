@@ -1,82 +1,88 @@
-# Reasoning Techniques Pattern
+# Evaluation and Monitoring Pattern
 
 ## When to Use
 
-- **Complex problem-solving**: Multi-step logical challenges
-- **Mathematical reasoning**: Problems requiring systematic thinking
-- **Strategic planning**: Evaluating multiple approaches
-- **Critical analysis**: Deep examination of options
-- **Decision making**: Weighing alternatives systematically
-- **Creative exploration**: Generating diverse solutions
+- **Production systems**: Any system requiring reliability
+- **Quality assurance**: Ensuring consistent performance
+- **Compliance requirements**: Meeting regulatory standards
+- **Performance optimization**: Identifying bottlenecks
+- **Cost management**: Tracking resource usage
+- **Continuous improvement**: Data-driven optimization
 
 ## Where It Fits
 
-- **Research analysis**: Breaking down complex research questions
-- **Code debugging**: Systematic problem identification
-- **Business strategy**: Evaluating strategic options
-- **Medical diagnosis**: Differential diagnosis reasoning
-- **Legal analysis**: Building logical arguments
+- **Enterprise AI deployments**: Mission-critical systems
+- **SaaS platforms**: Multi-tenant service monitoring
+- **Healthcare systems**: Patient safety monitoring
+- **Financial services**: Trading system oversight
+- **E-commerce**: Transaction and recommendation monitoring
 
 ## Pros
 
-- **Improved accuracy**: Systematic thinking reduces errors
-- **Transparency**: Clear reasoning traces
-- **Exploration**: Considers multiple solution paths
-- **Robustness**: Multiple methods provide validation
-- **Learning**: Reasoning traces help improvement
-- **Flexibility**: Different techniques for different problems
-- **Quality**: Higher quality solutions through deliberation
+- **Reliability**: Early detection of issues
+- **Performance visibility**: Clear system insights
+- **Quality assurance**: Consistent output standards
+- **Cost control**: Resource usage tracking
+- **Compliance**: Audit trail maintenance
+- **Improvement data**: Metrics guide optimization
+- **User trust**: Transparent performance metrics
 
 ## Cons
 
-- **Increased latency**: Multiple reasoning steps take time
-- **Token consumption**: Verbose reasoning uses more tokens
-- **Complexity**: Managing reasoning flows is challenging
-- **Overthinking**: Can make simple problems complex
-- **Context limits**: Long reasoning may exceed windows
-- **Cost multiplication**: Multiple paths increase costs
-- **Diminishing returns**: Extra reasoning may not help
+- **Infrastructure overhead**: Monitoring systems require resources
+- **Complexity**: Managing multiple metrics and alerts
+- **Alert fatigue**: Too many notifications
+- **Storage costs**: Logging and metrics data
+- **Performance impact**: Instrumentation adds overhead
+- **Maintenance burden**: Keeping tests updated
+- **False positives**: Unnecessary alerts and rollbacks
 
 ## Real-World Examples
 
-1. **Mathematical Problem Solver**:
-   - Chain-of-Thought for step-by-step solutions
-   - Self-consistency checking multiple approaches
-   - Tree-of-Thoughts exploring solution branches
-   - Validation through different methods
-   - Clear explanation generation
+1. **E-commerce Recommendation Engine**:
+   - Click-through rate monitoring
+   - Conversion tracking
+   - A/B test evaluation
+   - Latency monitoring
+   - Cost per recommendation
+   - Drift detection in user preferences
 
-2. **Strategic Business Advisor**:
-   - Tree-of-Thoughts for strategy exploration
-   - Debate between growth vs efficiency
-   - Self-consistency across market analyses
-   - ReAct pattern with data retrieval
-   - Synthesis of best strategies
+2. **Customer Service Chatbot**:
+   - Resolution rate tracking
+   - Customer satisfaction scores
+   - Response time monitoring
+   - Escalation rate analysis
+   - Cost per interaction
+   - Quality sampling and review
 
-3. **Code Architecture Designer**:
-   - Chain-of-Thought for design decisions
-   - Tree exploration of architectures
-   - Debate between design patterns
-   - ReAct with code analysis tools
-   - Reasoning persistence for documentation
+3. **Financial Trading System**:
+   - Trade execution monitoring
+   - Slippage tracking
+   - Risk limit compliance
+   - Latency measurements
+   - Profit/loss attribution
+   - Regulatory audit logs
 
-4. **Medical Diagnostic System**:
-   - Differential diagnosis reasoning tree
-   - Self-consistency across symptoms
-   - Chain-of-Thought for treatment plans
-   - Debate between treatment options
-   - Evidence-based reasoning traces
+4. **Content Moderation Platform**:
+   - Accuracy metrics (precision/recall)
+   - False positive rates
+   - Processing time per item
+   - Human agreement scores
+   - Cost per moderation
+   - Policy violation trends
 
-5. **Legal Case Analyzer**:
-   - Chain-of-Thought for legal arguments
-   - Tree exploration of precedents
-   - Debate between interpretations
-   - Self-consistency across statutes
-   - Structured legal reasoning
+5. **Medical Diagnosis AI**:
+   - Diagnostic accuracy rates
+   - False negative monitoring
+   - Time to diagnosis
+   - Clinician agreement scores
+   - System availability metrics
+   - Patient outcome tracking
 
-6. **Investment Analysis Platform**:
-   - Tree-of-Thoughts for scenario analysis
-   - Self-consistency across valuations
-   - Debate bull vs bear cases
-   - Chain reasoning for DCF models
-   - ReAct with market data retrieval
+6. **Code Generation Tool**:
+   - Code quality metrics
+   - Compilation success rates
+   - Test pass rates
+   - Developer acceptance rates
+   - Generation time tracking
+   - Usage pattern analysis
