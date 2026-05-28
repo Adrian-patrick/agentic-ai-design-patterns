@@ -1,33 +1,35 @@
-from typing import Any, Literal, Optional
+from typing import Any, List, Literal, Optional
 from pydantic import BaseModel, Field
 
-class InputEvaluation(BaseModel):
-    """Structured evaluation of user input for safety and confidentiality."""
-    risk_level: Literal["low", "medium", "very_high"] = Field(description="Assessed risk level.")
-    pii_detected: bool = Field(description="True if PII like email, phone, credit card, etc., is detected.")
-    injection_detected: bool = Field(description="True if prompt injection or system hijacking is detected.")
-    redacted_input: str = Field(description="Input with PII redacted/masked, or original input if low risk.")
-    reason: str = Field(description="Explanation for the risk assessment and redacts.")
+class PriorityScoreCard(BaseModel):
+    """Structured evaluation and scoring metrics for a task priority classification."""
+    business_value: float = Field(description="Business value score from 1.0 to 10.0 (Premium customer tier has higher value).")
+    risk_level: float = Field(description="Risk multiplier from 1.0 (Low) to 3.0 (Critical).")
+    effort: float = Field(description="Estimated effort from 1.0 (Very Low) to 5.0 (Very High).")
+    urgency: float = Field(description="Time sensitivity score from 1.0 (Low) to 5.0 (Critical).")
+    explanation: str = Field(description="Reasoning details behind the score assignment.")
 
-class OutputEvaluation(BaseModel):
-    """Structured evaluation of assistant output against compliance policies."""
-    safe: bool = Field(description="True if the response complies with ethics, values, and legal rules.")
-    policy_violation: Optional[str] = Field(default=None, description="Detailed policy violation if unsafe.")
-    synthesis_decision: Literal["allow", "block", "edit"] = Field(description="Final action to take for the output.")
+class SupportTicket(BaseModel):
+    """Data structure representing a support ticket in our priority queue."""
+    id: str = Field(description="Unique identifier of the ticket.")
+    customer_tier: Literal["premium", "standard"] = Field(description="Customer service tier.")
+    initial_urgency: Literal["critical", "high", "normal", "low"] = Field(description="Stated ticket urgency level.")
+    description: str = Field(description="Details of the support request.")
+    age_days: int = Field(description="Number of days the ticket has been waiting in the queue.")
+    progress_pct: int = Field(default=0, description="Percentage of processing progress (0 to 100).")
+    priority_score: float = Field(default=0.0, description="Calculated final priority score.")
+    score_card: Optional[PriorityScoreCard] = Field(default=None, description="Detailed priority scorecard.")
 
 class State(BaseModel):
-    """Memory state for the Guardrails/Safety pattern."""
-    original_input: str = Field(description="Original user prompt.")
-    cleaned_input: Optional[str] = Field(default=None, description="Cleaned or redacted input.")
-    risk_level: str = Field(default="low", description="Evaluated input risk level.")
-    worker_output: Optional[str] = Field(default=None, description="Output from the executor agent.")
-    output_evaluation: Optional[OutputEvaluation] = Field(default=None, description="Evaluated output compliance report.")
-    final_decision: str = Field(default="allow", description="Final decision: allow, block, edit.")
-    rejection_reason: Optional[str] = Field(default=None, description="Reason for rejection if blocked.")
+    """Memory state for the Prioritization and Preemption pattern."""
+    queue: List[SupportTicket] = Field(default_factory=list, description="The ordered priority queue of active tickets.")
+    running_task: Optional[SupportTicket] = Field(default=None, description="The ticket currently executing.")
+    completed_tasks: List[SupportTicket] = Field(default_factory=list, description="Tickets successfully resolved.")
+    preemption_events: List[str] = Field(default_factory=list, description="Audit log of runtime preemption events.")
+    new_ticket_event: Optional[SupportTicket] = Field(default=None, description="Simulated incoming high-priority ticket.")
     system_status: str = Field(default="Initializing", description="Current operations log detail.")
 
 class Dependencies(BaseModel):
-    """Injectable dependencies for safety agents."""
-    input_guardrail_agent: Any
-    execution_agent: Any
-    output_guardrail_agent: Any
+    """Injectable dependencies for the prioritization agents."""
+    prioritizer_agent: Any
+    worker_agent: Any

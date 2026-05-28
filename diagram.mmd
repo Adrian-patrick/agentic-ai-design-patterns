@@ -1,77 +1,79 @@
 graph TD
-    Start[Someone Sends Input] --> Clean[Clean the Input]
+    Start[Task Queue] --> Build[Build Dependency Graph]
     
-    Clean --> Check{Check for Problems}
+    Build --> Map[Map Dependencies]
+    Map --> Tasks[Task List]
+    Tasks --> T1[Task 1]
+    Tasks --> T2[Task 2]
+    Tasks --> T3[Task 3]
+    Tasks --> TN[Task N]
     
-    Check --> Personal[Personal Info]
-    Check --> Attack[Hacking Attempts]
-    Check --> Bad[Harmful Content]
+    T1 --> Score[Score Each Task]
+    T2 --> Score
+    T3 --> Score
+    TN --> Score
     
-    Personal --> Hide[Hide Personal Info]
-    Attack --> Block[Block the Attack]
-    Bad --> Remove[Remove Bad Content]
+    Score --> Value{Scoring Factors}
     
-    Hide --> Risk[Check Risk Level]
-    Block --> Risk
-    Remove --> Risk
+    Value --> Business[Business Value]
+    Value --> Risk[Risk Level]
+    Value --> Effort[Effort Required]
+    Value --> Urgency[Time Sensitivity]
+    Value --> Dependencies[Dependency Count]
     
-    Risk --> Level{How Risky Is It?}
+    Business --> Calculate[Calculate Priority Score]
+    Risk --> Calculate
+    Effort --> Calculate
+    Urgency --> Calculate
+    Dependencies --> Calculate
     
-    Level -->|Low Risk| GoAhead[Process Normally]
-    Level -->|Medium Risk| Careful[Add Limits]
-    Level -->|High Risk| Review[Need Human Review]
-    Level -->|Very High Risk| Stop[Block Completely]
+    Calculate --> Formula[Priority = Value/Effort × Urgency × Risk]
     
-    GoAhead --> DoWork[Do the Work]
-    Careful --> DoWork
-    Review --> Human[Human Checks It]
+    Formula --> Rank[Rank Tasks]
+    Rank --> Order[Initial Order]
     
-    DoWork --> Output[Create Response]
-    Human --> Output
+    Order --> Schedule{Scheduling Strategy}
     
-    Output --> CheckOutput{Check the Response}
+    Schedule --> Quota[Apply Quotas]
+    Schedule --> Aging[Task Aging]
+    Schedule --> Balance[Load Balance]
     
-    CheckOutput --> Rules[Check Company Rules]
-    Rules --> Ethics[Is It Ethical?]
-    Rules --> Legal[Is It Legal?]
-    Rules --> Brand[Does It Match Our Values?]
+    Quota --> Prevent[Prevent Starvation]
+    Aging --> Boost[Boost Old Tasks]
+    Balance --> Distribute[Distribute Work]
     
-    Ethics --> Score[Safety Score]
-    Legal --> Score
-    Brand --> Score
+    Prevent --> Queue2[Priority Queue]
+    Boost --> Queue2
+    Distribute --> Queue2
     
-    Score --> Safe{Is It Safe Enough?}
+    Queue2 --> Execute[Execute Top Task]
     
-    Safe -->|Yes| Limits[Check Tool Limits]
-    Safe -->|No| Pass[Allow Response]
+    Execute --> Monitor{New High Priority?}
     
-    Limits --> Protected[Use Protected Mode]
-    Protected --> Permissions[Check Permissions]
-    Permissions --> Approve[Need Approval]
+    Monitor -->|Yes| Preempt[Preempt Current]
+    Monitor -->|No| Continue[Continue Current]
     
-    Approve --> Final{Final Decision}
-    Pass --> Final
+    Preempt --> Save[Save State]
+    Save --> Switch[Switch to High Priority]
     
-    Final -->|Allow| Send[Send to User]
-    Final -->|Change| Edit[Fix the Response]
-    Final -->|Block| Reject[Explain Why Not]
+    Continue --> Complete{Task Complete?}
+    Switch --> Complete
     
-    Send --> Log[Record What Happened]
-    Edit --> Log
-    Reject --> Log
-    Stop --> Log
+    Complete -->|Yes| Remove[Remove from Queue]
+    Complete -->|No| Execute
     
-    Log --> Watch[Watch for Patterns]
-    Watch --> Override{Can Human Override?}
+    Remove --> Events{New Events?}
     
-    Override -->|Yes| Update[Update Rules]
-    Override -->|No| Learn[System Learns]
+    Events -->|Yes| Reorder[Re-calculate Priorities]
+    Events -->|No| Next[Get Next Task]
     
-    Update --> End[Safety Check Complete]
-    Learn --> End
+    Reorder --> Rank
+    Next --> Execute
+    
+    Next --> End[Optimized Execution]
 
     style Start fill:#e1f5fe
-    style Level fill:#ffccbc
-    style CheckOutput fill:#fff59d
-    style Final fill:#fff9c4
+    style Value fill:#fff59d
+    style Schedule fill:#fff9c4
+    style Monitor fill:#f3e5f5
     style End fill:#c8e6c9

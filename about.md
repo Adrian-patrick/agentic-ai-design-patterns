@@ -1,88 +1,88 @@
-# Guardrails/Safety Patterns
+# Prioritization Pattern
 
 ## When to Use
 
-- **Public-facing systems**: Protecting users from harmful content
-- **Regulated industries**: Ensuring compliance with laws
-- **Brand protection**: Maintaining company reputation
-- **Data privacy**: Protecting sensitive information
-- **Security requirements**: Preventing system exploitation
-- **Ethical AI**: Ensuring responsible AI behavior
+- **Resource constraints**: Limited processing capacity
+- **Multiple objectives**: Competing goals and tasks
+- **Dynamic environments**: Constantly changing priorities
+- **Complex dependencies**: Tasks with interdependencies
+- **Time-sensitive operations**: Deadline-driven work
+- **Fair scheduling**: Preventing task starvation
 
 ## Where It Fits
 
-- **Chatbots and assistants**: Customer-facing AI systems
-- **Content generation**: Automated content creation
-- **Healthcare AI**: Medical advice and diagnosis
-- **Financial services**: Trading and advisory systems
-- **Educational platforms**: Student-facing AI tools
+- **Task management systems**: Workflow orchestration
+- **Customer service**: Ticket prioritization
+- **Manufacturing**: Production scheduling
+- **Healthcare**: Patient triage systems
+- **DevOps**: Deployment and maintenance prioritization
 
 ## Pros
 
-- **Risk mitigation**: Prevents harmful outputs
-- **Compliance**: Meets regulatory requirements
-- **Brand protection**: Maintains reputation
-- **User safety**: Protects from inappropriate content
-- **Security**: Prevents exploitation attempts
-- **Consistency**: Uniform safety standards
-- **Auditability**: Clear safety decision trails
+- **Efficiency**: Optimal use of resources
+- **Responsiveness**: High-priority items handled first
+- **Fairness**: Prevents indefinite delays
+- **Adaptability**: Adjusts to changing conditions
+- **Transparency**: Clear prioritization logic
+- **Goal alignment**: Tasks ranked by business value
+- **Scalability**: Handles growing task queues
 
 ## Cons
 
-- **False positives**: May block legitimate requests
-- **Latency increase**: Safety checks add processing time
-- **User frustration**: Over-restrictive filtering
-- **Complexity**: Multiple layers of checks
-- **Maintenance burden**: Policies need regular updates
-- **Context blindness**: May miss nuanced safety issues
-- **Cost overhead**: Additional processing and monitoring
+- **Complexity**: Priority calculation can be complex
+- **Overhead**: Continuous reordering costs resources
+- **Starvation risk**: Low-priority tasks may wait forever
+- **Context switching**: Preemption adds overhead
+- **Subjective scoring**: Priority factors may be disputed
+- **Dependencies**: Complex dependency management
+- **Prediction errors**: Effort estimates may be wrong
 
 ## Real-World Examples
 
-1. **Social Media AI Moderator**:
-   - Hate speech detection and filtering
-   - PII redaction in user posts
-   - Misinformation flagging
-   - Violence/graphic content blocking
-   - Copyright violation detection
-   - Appeal process for false positives
+1. **Customer Support System**:
+   - Premium customers get priority
+   - Urgent issues ranked higher
+   - Age-based escalation
+   - Skill-based routing
+   - SLA compliance tracking
+   - Load balancing across agents
 
-2. **Healthcare Chatbot**:
-   - Medical advice disclaimers
-   - Emergency situation detection
-   - Drug interaction warnings
-   - Privacy protection for health data
-   - Scope limitations enforcement
-   - Professional referral triggers
+2. **Software Development Pipeline**:
+   - Critical bugs prioritized
+   - Feature value scoring
+   - Technical debt scheduling
+   - Dependency resolution
+   - Sprint capacity planning
+   - Resource allocation
 
-3. **Financial Advisory AI**:
-   - Investment risk warnings
-   - Regulatory compliance checks
-   - Insider trading prevention
-   - Client suitability verification
-   - Market manipulation detection
-   - Audit trail maintenance
+3. **Healthcare Triage**:
+   - Emergency severity scoring
+   - Wait time consideration
+   - Resource availability
+   - Specialist routing
+   - Test result prioritization
+   - Appointment scheduling
 
-4. **Educational AI Tutor**:
-   - Age-appropriate content filtering
-   - Academic integrity protection
-   - Bullying/harassment prevention
-   - Personal information protection
-   - Inappropriate topic blocking
-   - Parent/teacher override options
+4. **Manufacturing Scheduler**:
+   - Order value prioritization
+   - Deadline management
+   - Resource optimization
+   - Setup time minimization
+   - Quality requirements
+   - Maintenance windows
 
-5. **Enterprise AI Assistant**:
-   - Data classification enforcement
-   - Access control verification
-   - Confidentiality protection
-   - Compliance checking
-   - Security threat detection
-   - Activity logging and monitoring
+5. **Content Publishing**:
+   - Trending topic priority
+   - Editorial calendar
+   - Author availability
+   - SEO value scoring
+   - Social media timing
+   - Cross-platform coordination
 
-6. **Content Generation Platform**:
-   - Copyright infringement prevention
-   - Trademark protection
-   - Defamation blocking
-   - Bias detection and mitigation
-   - Fact-checking integration
-   - Quality standards enforcement
+6. **Network Traffic Management**:
+   - QoS packet prioritization
+   - Bandwidth allocation
+   - Latency-sensitive routing
+   - Fair queuing
+   - Emergency traffic priority
+   - Load balancing
